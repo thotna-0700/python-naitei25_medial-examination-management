@@ -26,6 +26,10 @@ COMMON_LENGTH = {
     "TOKEN": 255,
     "URL": 255,
     "PUBLIC_ID": 100,
+    "IDENTITY_NUMBER": 20,
+    "INSURANCE_NUMBER": 50,
+    "OTP": 6,
+    "RESET_TOKEN": 6,
 }
 
 # ======================
@@ -35,7 +39,10 @@ USER_LENGTH = {
     "EMAIL": 100,
     "PASSWORD": 255,
     "PHONE": 20,
+    "FULL_NAME": 100,
 }
+
+ROLE_LENGTH = 1  
 
 # ======================
 # Patient domain
