@@ -72,7 +72,7 @@ export const deleteServiceOrder = async (serviceId: number, orderId: number): Pr
 
 export const getServiceOrdersByAppointmentId = async (appointmentId: number): Promise<ServiceOrder[]> => {
   try {
-    const response = await api.get(`/appointments/services/appointments/${appointmentId}/orders`)
+    const response = await api.get(`/service-orders/appointments/${appointmentId}/orders`)
     return response.data
   } catch (error) {
     console.error("Lỗi khi lấy danh sách đơn dịch vụ theo appointmentId:", error)
