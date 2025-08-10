@@ -232,37 +232,38 @@ class AppointmentNoteViewSet(viewsets.ModelViewSet):
 class ServiceOrderViewSet(viewsets.ViewSet):
   parser_classes = [MultiPartParser, JSONParser]
 
-  def list(self, request):
-      orders = ServiceOrderService.get_all_orders()
-      serializer = ServiceOrderSerializer(orders, many=True)
-      return Response(serializer.data)
+    def list(self, request):
+        orders = ServiceOrderService.get_all_orders()
+        serializer = ServiceOrderSerializer(orders, many=True, context={'request': request})
+        return Response(serializer.data)
 
-  def retrieve(self, request, pk=None):
-      order = ServiceOrderService.get_order_by_id(pk)
-      serializer = ServiceOrderSerializer(order)
-      return Response(serializer.data)
+    def retrieve(self, request, pk=None):
+        order = ServiceOrderService.get_order_by_id(pk)
+        serializer = ServiceOrderSerializer(order, context={'request': request})
+        return Response(serializer.data)
 
-  def create(self, request):
-      serializer = ServiceOrderSerializer(data=request.data)
-      serializer.is_valid(raise_exception=True)
-      order = serializer.save()
-      return Response(ServiceOrderSerializer(order).data)
+    def create(self, request):
+        serializer = ServiceOrderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        return Response(ServiceOrderSerializer(order, context={'request': request}).data)
 
-  def update(self, request, pk=None):
-      serializer = ServiceOrderSerializer(data=request.data)
-      serializer.is_valid(raise_exception=True)
-      updated = ServiceOrderService.update_order(pk, serializer.validated_data)
-      return Response(ServiceOrderSerializer(updated).data)
+    def update(self, request, pk=None):
+        order = ServiceOrderService.get_order_by_id(pk)
+        serializer = ServiceOrderSerializer(order, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        updated_order = serializer.save()
+        return Response(ServiceOrderSerializer(updated_order, context={'request': request}).data)
 
-  def destroy(self, request, pk=None):
-      ServiceOrderService.delete_order(pk)
-      return Response({"message": _("Đặt dịch vụ đã xóa thành công")})
+    def destroy(self, request, pk=None):
+        ServiceOrderService.delete_order(pk)
+        return Response({"message": _("Đặt dịch vụ đã xóa thành công")})
 
-  @action(detail=False, methods=['get'], url_path='appointments/(?P<appointment_id>[^/.]+)/orders')
-  def by_appointment(self, request, appointment_id=None):
-      orders = ServiceOrderService.get_orders_by_appointment_id(appointment_id)
-      serializer = ServiceOrderSerializer(orders, many=True)
-      return Response(serializer.data)
+    @action(detail=False, methods=['get'], url_path='appointments/(?P<appointment_id>[^/.]+)/orders')
+    def by_appointment(self, request, appointment_id=None):
+        orders = ServiceOrderService.get_orders_by_appointment_id(appointment_id)
+        serializer = ServiceOrderSerializer(orders, many=True, context={'request': request})
+        return Response(serializer.data)
 
   @action(detail=False, methods=['get'], url_path='rooms/(?P<room_id>[^/.]+)/orders')
   def by_room(self, request, room_id=None):
@@ -275,13 +276,13 @@ class ServiceOrderViewSet(viewsets.ViewSet):
           if not order_date:
               return Response({"error": _("Ngày không hợp lệ. Định dạng đúng: YYYY-MM-DD")}, status=400)
 
-      orders = ServiceOrderService.get_orders_by_room_and_status_and_date(
-          room_id=room_id,
-          status=status_param,
-          order_date=order_date
-      )
-      serializer = ServiceOrderSerializer(orders, many=True)
-      return Response(serializer.data)
+        orders = ServiceOrderService.get_orders_by_room_and_status_and_date(
+            room_id=room_id,
+            status=status_param,
+            order_date=order_date
+        )
+        serializer = ServiceOrderSerializer(orders, many=True, context={'request': request})
+        return Response(serializer.data)
 
   @action(detail=True, methods=['post'], url_path='result')
   def upload_result(self, request, pk=None):
@@ -289,11 +290,11 @@ class ServiceOrderViewSet(viewsets.ViewSet):
       if not file:
           return Response({"message": _("Thiếu tệp kết quả.")}, status=status.HTTP_400_BAD_REQUEST)
 
-      updated_order = ServiceOrderService.upload_test_result(pk, file)
-      return Response({
-          "message": _("Tải lên kết quả thành công."),
-          "data": ServiceOrderSerializer(updated_order).data
-      })
+        updated_order = ServiceOrderService.upload_test_result(pk, file)
+        return Response({
+            "message": _("Tải lên kết quả thành công."),
+            "data": ServiceOrderSerializer(updated_order, context={'request': request}).data
+        })
 
 class ServiceViewSet(viewsets.ViewSet):
   def list(self, request):
