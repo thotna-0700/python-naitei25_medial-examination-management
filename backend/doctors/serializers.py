@@ -135,4 +135,4 @@ class DoctorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Doctor
-        fields = '__all__'
+        fields = '__all__' # Đã thêm lại dòng này
