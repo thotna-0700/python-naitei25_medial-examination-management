@@ -52,34 +52,66 @@ class ServiceSerializer(serializers.Serializer):
 
 
 class ServiceOrderSerializer(serializers.Serializer):
-  order_id = serializers.IntegerField(required=False)
-  appointment_id = serializers.IntegerField(
-      required=True,
-      error_messages={
-          'required': _('Mã lịch hẹn không được để trống')
-      }
-  )
-  room_id = serializers.IntegerField(
-      required=True,
-      error_messages={
-          'required': _('Mã phòng không được để trống')
-      }
-  )
-  service_id = serializers.IntegerField(
-      required=True,
-      error_messages={
-          'required': _('Mã dịch vụ không được để trống')
-      }
-  )
-  order_status = serializers.CharField(source='status', required=False)
-  result = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-  number = serializers.IntegerField(required=False)
-  order_time = serializers.DateTimeField(required=False)
-  result_time = serializers.DateTimeField(required=False)
-  created_at = serializers.CharField(required=False)
+    order_id = serializers.IntegerField(source='id', required=False)
+    appointment_id = serializers.IntegerField(
+        required=True,
+        error_messages={
+            'required': _('Mã lịch hẹn không được để trống')
+        }
+    )
+    room_id = serializers.IntegerField(
+        required=True,
+        error_messages={
+            'required': _('Mã phòng không được để trống')
+        }
+    )
+    service_id = serializers.IntegerField(
+        required=True,
+        error_messages={
+            'required': _('Mã dịch vụ không được để trống')
+        }
+    )
+    order_status = serializers.CharField(source='status', required=False)
+    result = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    number = serializers.IntegerField(required=False)
+    order_time = serializers.DateTimeField(required=False)
+    result_time = serializers.DateTimeField(required=False)
+    created_at = serializers.CharField(required=False)
+    result_file_url = serializers.CharField(read_only=True)
+    result_file_public_id = serializers.CharField(read_only=True)
 
-  def create(self, validated_data):
-      return ServiceOrder.objects.create(**validated_data)
+    def create(self, validated_data):
+        return ServiceOrder.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        # Map validated fields to model instance; only update provided keys
+        if 'appointment_id' in validated_data:
+            instance.appointment_id = validated_data['appointment_id']
+        if 'room_id' in validated_data:
+            instance.room_id = validated_data['room_id']
+        if 'service_id' in validated_data:
+            instance.service_id = validated_data['service_id']
+        if 'status' in validated_data:  # comes from order_status source mapping
+            instance.status = validated_data['status']
+        if 'result' in validated_data:
+            instance.result = validated_data['result']
+        if 'number' in validated_data:
+            instance.number = validated_data['number']
+        if 'order_time' in validated_data:
+            instance.order_time = validated_data['order_time']
+        if 'result_time' in validated_data:
+            instance.result_time = validated_data['result_time']
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        for key in ['result', 'result_file_url']:
+            val = data.get(key)
+            if val and isinstance(val, str) and val.startswith('/') and request:
+                data[key] = request.build_absolute_uri(val)
+        return data
 
 
 class ScheduleSerializer(serializers.ModelSerializer):

@@ -1,9 +1,11 @@
 from datetime import datetime, date, timedelta
 from django.core.paginator import Paginator
 from django.core.files.uploadedfile import UploadedFile
+from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Q # Import Q object for complex queries
+from uuid import uuid4
 from common.constants import PAGE_NO_DEFAULT, PAGE_SIZE_DEFAULT
 from doctors.models import Schedule, ScheduleStatus
 from .models import Appointment, AppointmentNote, ServiceOrder, Service
@@ -338,7 +340,39 @@ class ServiceOrderService:
   @staticmethod
   def upload_test_result(order_id, file: UploadedFile):
       order = get_object_or_404(ServiceOrder, id=order_id)
-      order.test_result_file = file
+      # Persist file using default storage and record URL
+      unique_name = f"service_results/{uuid4()}_{file.name}"
+      stored_path = default_storage.save(unique_name, file)
+      try:
+          file_url = default_storage.url(stored_path)
+      except Exception:
+          # Fallback: if storage backend has no url() implementation
+          file_url = stored_path
+      # Ensure MEDIA_URL prefix if missing
+      from django.conf import settings
+      if settings.DEBUG and not file_url.startswith('http'):
+          # Normalize leading slash
+          if not file_url.startswith('/'):
+              file_url = f"/{file_url}"
+          # If already starts with /media keep it, else prefix
+          if settings.MEDIA_URL and not file_url.startswith(settings.MEDIA_URL):
+              # MEDIA_URL expected to have leading and trailing slash
+              media_url = settings.MEDIA_URL
+              if not media_url.startswith('/'):
+                  media_url = '/' + media_url
+              if not media_url.endswith('/'):
+                  media_url += '/'
+              # Remove leading slash from stored path for join
+              cleaned_path = file_url.lstrip('/')
+              file_url = media_url + cleaned_path.split('media/',1)[-1] if 'media/' in cleaned_path else media_url + cleaned_path
+      order.result_file_url = file_url
+      # For now we don't have a public_id concept with default storage; store filename as placeholder
+      order.result_file_public_id = stored_path
+      # Also mirror to result field so existing frontend (expecting 'result') receives a URL
+      order.result = file_url
+      # Set result_time if not set
+      if not order.result_time:
+          order.result_time = datetime.now()
       order.save()
       return order
 
