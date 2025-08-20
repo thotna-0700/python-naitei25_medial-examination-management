@@ -63,17 +63,15 @@ const ServicePatients: React.FC = () => {
         try {
             const response = await api.get(`/schedules/?doctor_id=${doctorId}`);
             const schedules = response.data || [];
-            console.log("Fetched schedules:", schedules);
             setWorkSchedules(schedules);
 
             if (selectedDate && !selectedRoomId && schedules.length > 0) {
                 const dateSchedule = schedules.find((schedule: WorkSchedule) => schedule.work_date === selectedDate);
                 if (dateSchedule) {
                     const roomId = typeof dateSchedule.room_id === "number" ? dateSchedule.room_id : dateSchedule.room_id?.id;
-                    console.log("Found dateSchedule:", dateSchedule, "Setting roomId to:", roomId);
                     setSelectedRoomId(roomId);
                 } else {
-                    console.log("No schedule found for date:", selectedDate);
+                    console.error("No schedule found for date:", selectedDate);
                 }
             }
         } catch (error: any) {
@@ -89,13 +87,12 @@ const ServicePatients: React.FC = () => {
         if (!selectedRoomId) {
             setServiceOrders([]);
             setAppointmentsData({});
-            console.log("No selectedRoomId, skipping fetchServiceOrders");
+            console.error("No selectedRoomId, skipping fetchServiceOrders");
             return;
         }
 
         setLoading(true);
         setError(null);
-        console.log("Fetching service orders for roomId:", selectedRoomId, "status:", statusFilter, "date:", selectedDate);
 
         try {
             const data = await getServiceOrdersByRoomId(
@@ -103,18 +100,17 @@ const ServicePatients: React.FC = () => {
                 statusFilter !== "all" ? statusFilter : undefined,
                 selectedDate || undefined,
             );
-            console.log("Raw service orders data:", data);
 
             const orders = Array.isArray(data) ? data : [];
             if (orders.length === 0) {
-                console.log("No service orders found for the given filters");
+                console.error("No service orders found for the given filters");
                 setServiceOrders([]);
                 setAppointmentsData({});
                 return;
             }
 
             const servicesData = await servicesService.getAllServices();
-            console.log("Services data:", servicesData);
+
             const serviceMap = new Map();
             if (Array.isArray(servicesData)) {
                 servicesData.forEach((service) => {
@@ -123,7 +119,7 @@ const ServicePatients: React.FC = () => {
             } else {
                 console.warn("servicesData is not an array:", servicesData);
             }
-            console.log("Service Map:", serviceMap);
+
             const enrichedOrders = orders.map((order) => ({
                 orderId: order.id || order.order_id,
                 appointmentId: order.appointment_id,
@@ -135,12 +131,11 @@ const ServicePatients: React.FC = () => {
                 number: order.number,
                 orderTime: order.order_time,
             }));
-            console.log("Enriched orders:", enrichedOrders);
+
 
             const appointmentPromises = enrichedOrders.map(async (order) => {
                 try {
                     const appointment = await appointmentService.getAppointmentById(order.appointmentId);
-                    console.log(`Appointment data for order ${order.orderId} (appointmentId: ${order.appointmentId}):`, appointment);
                     return { appointmentId: order.appointmentId, data: appointment };
                 } catch (error) {
                     console.error(`Error fetching appointment ${order.appointmentId}:`, error);
@@ -149,7 +144,6 @@ const ServicePatients: React.FC = () => {
             });
 
             const appointmentResults = await Promise.all(appointmentPromises);
-            console.log("Appointment results:", appointmentResults);
             const appointmentsMap = appointmentResults.reduce(
                 (acc, result) => {
                     acc[result.appointmentId] = result.data;
@@ -176,7 +170,6 @@ const ServicePatients: React.FC = () => {
     }, [fetchWorkSchedules])
 
     useEffect(() => {
-        console.log("Selected Room ID:", selectedRoomId)
         if (selectedRoomId) {
             fetchServiceOrders()
         }
@@ -195,7 +188,6 @@ const ServicePatients: React.FC = () => {
                 return { roomId, roomNote };
             });
         // Remove duplicate roomId
-        console.log("Rooms for selected date:", roomsToday);
         const uniqueRooms = roomsToday.filter((room, idx, arr) =>
             room.roomId !== undefined && arr.findIndex(r => r.roomId === room.roomId) === idx
         );
@@ -278,6 +270,14 @@ const ServicePatients: React.FC = () => {
         })
     }
 
+    // Sort appointments by status
+    const statusOrder = ["O", "C"]
+    const sortedAppointments = [...filteredServiceOrders].sort((a, b) => {
+        const aIndex = statusOrder.indexOf(a.orderStatus)
+        const bIndex = statusOrder.indexOf(b.orderStatus)
+        return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex)
+    })
+
     const columns = [
         {
             title: t("table.no"),
@@ -294,7 +294,6 @@ const ServicePatients: React.FC = () => {
             render: (appointmentId: number, record: ServiceOrder) => {
                 const appointment = appointmentsData[appointmentId];
                 const patientInfo = appointment?.patientInfo;
-                console.log(`Rendering patient for appointmentId ${appointmentId}:`, { appointment, patientInfo });
                 return (
                     <div style={{ display: "flex", alignItems: "center" }}>
                         <Avatar
@@ -598,7 +597,7 @@ const ServicePatients: React.FC = () => {
                     ) : (
                         <Table
                             columns={columns}
-                            dataSource={filteredServiceOrders}
+                            dataSource={sortedAppointments}
                             rowKey="orderId"
                             pagination={{
                                 pageSize: 20,

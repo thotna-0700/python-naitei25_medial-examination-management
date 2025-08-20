@@ -52,6 +52,8 @@ import { stringToDate, dateToString } from "../../services/dateHelpServices"
 import { useTranslation } from "react-i18next"
 import { getAppointmentStatusColor } from "../../services/appointmentService"
 import { getServiceOrderById, updateServiceOrder, deleteServiceOrder } from "../../services/serviceOrderService"
+import { api } from "../../../../shared/services/api"
+
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
@@ -250,13 +252,19 @@ const PatientDetail: React.FC = () => {
         }
     }
 
-    const handleDeleteNote = (noteId?: number) => {
+    const handleDeleteNote = async (appointmentId?: number, noteId?: number) => {
         if (!noteId) {
             message.error(t("errors.noNoteId"))
             return
         }
-
-        deleteAppointmentNote(noteId)
+        try {
+            await api.delete(`/appointment-notes/${noteId}/`)
+            message.success("Xóa ghi chú thành công")
+            refreshAll(appointmentId)
+        } catch (error) {
+            console.error("Error deleting note:", error)
+            message.error("Xóa ghi chú thất bại")
+        }
     }
 
     // Xóa service order
@@ -318,6 +326,11 @@ const PatientDetail: React.FC = () => {
         D: "COMPLETED",
         X: "CANCELLED"
     }
+
+    // Determine if the order is completed
+    const currentAppointment = appointments.find(a => a.appointmentId === patientDetail?.appointmentId)
+    const isCompleted = currentAppointment?.status === "D"
+
     const getAppointmentStatusDisplay = (status?: string) => {
         // Try to get mapped status from context appointment
         let mappedStatus = status
@@ -573,7 +586,7 @@ const PatientDetail: React.FC = () => {
                                             name="systolicBloodPressure"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={300} className="w-full" />
+                                            <InputNumber min={0} max={300} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={7}>
@@ -582,7 +595,7 @@ const PatientDetail: React.FC = () => {
                                             name="diastolicBloodPressure"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={200} className="w-full" />
+                                            <InputNumber min={0} max={200} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={4}>
@@ -591,7 +604,7 @@ const PatientDetail: React.FC = () => {
                                             name="heartRate"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={200} className="w-full" />
+                                            <InputNumber min={0} max={200} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={4}>
@@ -600,12 +613,12 @@ const PatientDetail: React.FC = () => {
                                             name="bloodSugar"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={500} className="w-full" />
+                                            <InputNumber min={0} max={500} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={24}>
                                         <Form.Item label={t("labels.symptoms")} name="symptoms">
-                                            <Input.TextArea rows={4} />
+                                            <Input.TextArea rows={4} disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={24}>
@@ -614,7 +627,7 @@ const PatientDetail: React.FC = () => {
                                             name="diagnosis"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <Input.TextArea rows={4} />
+                                            <Input.TextArea rows={4} disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={24}>
@@ -623,12 +636,12 @@ const PatientDetail: React.FC = () => {
                                             name="doctorNotes"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <Input.TextArea rows={4} />
+                                            <Input.TextArea rows={4} disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
                                         <Form.Item name="isFollowUp" valuePropName="checked">
-                                            <Checkbox>{t("labels.followUpCheckbox")}</Checkbox>
+                                            <Checkbox disabled={isCompleted} >{t("labels.followUpCheckbox")}</Checkbox>
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
@@ -648,7 +661,7 @@ const PatientDetail: React.FC = () => {
                                                         <DatePicker
                                                             style={{ width: "100%" }}
                                                             format="DD/MM/YYYY"
-                                                            disabled={!isFollowUp}
+                                                            disabled={!isFollowUp || isCompleted}
                                                         />
                                                     </Form.Item>
                                                 )
@@ -753,6 +766,7 @@ const PatientDetail: React.FC = () => {
                                                                     <Button
                                                                         size="small"
                                                                         danger
+                                                                        disabled={isCompleted}
                                                                         icon={<DeleteOutlined />}
                                                                     />
                                                                 </Popconfirm>
@@ -796,13 +810,13 @@ const PatientDetail: React.FC = () => {
                                                                 <div className="flex items-center mb-2">
                                                                     <MessageOutlined style={{ marginRight: 8 }} />
                                                                     <span className="font-medium">
-                                                                        {note.noteType === NoteType.DOCTOR ? note.doctorName || t("labels.doctor") : t("labels.patient")}
+                                                                        {note.note_type === "D" ? t("labels.doctor") : t("labels.patient")}
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-gray-700">{note.content || ""}</p>
-                                                                {note.createdAt && (
+                                                                {note.created_at && (
                                                                     <p className="text-xs text-gray-500 mt-2">
-                                                                        {formatDateTime(note.createdAt)}
+                                                                        {formatDateTime(note.created_at)}
                                                                     </p>
                                                                 )}
                                                             </div>
@@ -810,7 +824,7 @@ const PatientDetail: React.FC = () => {
                                                                 type="text"
                                                                 danger
                                                                 icon={<CloseOutlined />}
-                                                                onClick={() => note.noteId && handleDeleteNote(note.noteId)}
+                                                                onClick={() => handleDeleteNote(note.appointment_id, note.id)}
                                                             />
                                                         </div>
                                                     </div>

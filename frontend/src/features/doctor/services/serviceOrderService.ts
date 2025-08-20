@@ -19,7 +19,7 @@ export const getAllServiceOrders = async (serviceId: number): Promise<ServiceOrd
 
 export const getServiceOrderById = async (orderId: number): Promise<ServiceOrder> => {
   try {
-    const response = await api.get(`service-orders/${orderId}/`)
+    const response = await api.get(`/service-orders/${orderId}/`)
     return response.data
   } catch (error) {
     console.error("Lỗi khi lấy chi tiết đơn dịch vụ:", error)
@@ -35,6 +35,16 @@ export const createServiceOrder = async (
   order_time: string
 ): Promise<ServiceOrder> => {
   try {
+    // Check for existing service orders with the same appointment_id and service_id
+    const existingOrders = await getServiceOrdersByAppointmentId(appointment_id)
+    console.log("Existing Orders:", existingOrders)
+    const isDuplicate = existingOrders.some((order) => order.service_id === service_id)
+
+    if (isDuplicate) {
+      throw new Error("Dịch vụ này đã được chỉ định cho cuộc hẹn này.")
+    }
+
+    // Proceed with creating the service order
     const serviceOrder = {
       appointment_id,
       service_id,
@@ -44,16 +54,20 @@ export const createServiceOrder = async (
     }
     const response = await api.post(`/service-orders/`, serviceOrder)
     return response.data
-  } catch (error) {
-    console.error("Lỗi khi tạo đơn dịch vụ:", error)
-    throw new Error("Không thể tạo đơn dịch vụ")
+  } catch (error: any) {
+    console.error("Lỗi khi tạo đơn dịch vụ:", error);
+    throw new Error(
+      error.message.includes("Dịch vụ này đã được chỉ định")
+        ? "Dịch vụ này đã được chỉ định cho cuộc hẹn này."
+        : "Không thể tạo đơn dịch vụ"
+    )
   }
 }
 
 export const updateServiceOrder = async (
   serviceId: number,
   orderId: number,
-  serviceOrder: ServiceOrder,
+  serviceOrder: ServiceOrder
 ): Promise<ServiceOrder> => {
   try {
     // Backend ServiceOrderViewSet.update expects field names in snake_case
