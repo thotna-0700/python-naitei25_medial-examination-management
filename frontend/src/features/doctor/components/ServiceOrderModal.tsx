@@ -11,7 +11,7 @@ import { examinationRoomService } from "../services/examinationRoomServices"
 import type { ExaminationRoom } from "../types/examinationRoom"
 import { appointmentService } from "../services/appointmentService"
 import { servicesService } from "../services/servicesService"
-import { createServiceOrder as createServiceOrderService } from "../services/serviceOrderService"
+import { createServiceOrder as createServiceOrderService, getServiceOrdersByAppointmentId } from "../services/serviceOrderService"
 import { useTranslation } from "react-i18next"
 
 const { Text } = Typography
@@ -40,6 +40,8 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
   const [examinationRooms, setExaminationRooms] = useState<ExaminationRoom[]>([])
   const [roomsLoading, setRoomsLoading] = useState(false)
   const [appointmentData, setAppointmentData] = useState<any>(null)
+  const [serviceOrderHistory, setServiceOrderHistory] = useState<ServiceOrder[]>([])
+  const [duplicateError, setDuplicateError] = useState("")
 
   const searchContainerRef = useRef<HTMLDivElement>(null)
 
@@ -70,9 +72,17 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
   }, [])
 
   const addIndication = (service: Services) => {
-    // ...existing code...
+    // Không cho add nếu đã tồn tại trong serviceOrderHistory hoặc indications
+    const serviceId = service.service_id ?? service.id
+    const existedInHistory = serviceOrderHistory.some((order) => order.serviceId === serviceId)
+    const existedInIndications = indications.some((item) => item.serviceId === serviceId)
+    if (existedInHistory || existedInIndications) {
+      setDuplicateError(t("serviceOrder.errors.duplicateService"))
+      return
+    }
+    setDuplicateError("")
     const newIndication: MedicalOrderItem = {
-      serviceId: service.service_id,
+      serviceId: serviceId,
       order_time: new Date().toISOString(),
       appointmentId: appointmentId!,
       roomId: null, // Let user choose, use null for empty
@@ -80,7 +90,7 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
       orderStatus: "ORDERED",
       service: {
         ...service,
-        service_id: service.id, // Add service_id field for backend compatibility
+        service_id: serviceId, // Add service_id field for backend compatibility
         serviceName: service.serviceName || (service as any).service_name
       },
     }
@@ -118,20 +128,36 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
 
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
+      let results: Services[] = []
       if (searchInput.trim()) {
-        const results = await searchServices(searchInput)
-        setFilteredServices(results)
+        results = await searchServices(searchInput)
       } else {
-        setFilteredServices(await searchServices(""))
+        results = await searchServices("")
       }
+      // Ẩn các service đã có trong serviceOrderHistory hoặc indications
+      const existedServiceIds = new Set([
+        ...serviceOrderHistory.map((order) => order.service_id),
+        ...indications.map((item) => item.service_id),
+      ])
+      setFilteredServices(results.filter((service) => {
+        const id = service.service_id ?? service.id
+        return !existedServiceIds.has(id)
+      }))
     }, 300)
     return () => clearTimeout(timeoutId)
-  }, [searchInput, searchServices])
+  }, [searchInput, searchServices, serviceOrderHistory, indications])
 
   useEffect(() => {
     if (isOpen && appointmentId) {
       fetchExaminationRooms()
       appointmentService.getAppointmentById(appointmentId).then(setAppointmentData).catch(console.error)
+      // Lấy danh sách service order history của appointment này
+      getServiceOrdersByAppointmentId(appointmentId)
+        .then(setServiceOrderHistory)
+        .catch(() => setServiceOrderHistory([]))
+    } else if (!isOpen) {
+      setServiceOrderHistory([])
+      setIndications([])
     }
   }, [isOpen, appointmentId, fetchExaminationRooms])
 
@@ -200,11 +226,17 @@ export const ServiceOrderModal: React.FC<ModalProps> = ({ isOpen, onClose, appoi
             placeholder={t("serviceOrder.placeholders.searchIndication")}
             prefix={<SearchOutlined />}
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={(e) => {
+              setSearchInput(e.target.value)
+              setDuplicateError("")
+            }}
             onFocus={() => setShowSearchResults(true)}
             onBlur={() => setShowSearchResults(false)}
             suffix={searchLoading ? <Spin size="small" /> : null}
           />
+          {duplicateError && (
+            <div className="text-red-500 text-xs mt-1">{duplicateError}</div>
+          )}
           {showSearchResults && filteredServices.length > 0 && (
             <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg z-10 max-h-60 overflow-y-auto">
               {filteredServices.map((service) => (

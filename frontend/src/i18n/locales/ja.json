@@ -609,7 +609,8 @@
     "noPrescriptions": "処方箋が見つかりません",
     "noMedicinesInPrescription": "この処方箋には薬がありません",
     "noTestResults": "検査結果がありません",
-    "noNotes": "メモがありません"
+    "noNotes": "メモがありません",
+    "noOrdersFound": "指示が見つかりません"
   },
   "options": {
     "allShifts": "すべてのシフト",
@@ -690,6 +691,7 @@
     "patientCode": "患者コード",
     "date": "日付",
     "time": "時間",
+    "doctor": "医師",
     "doctorNotes": "医師のメモ",
     "prescription": "処方箋",
     "prescriptionDate": "処方日",
@@ -1102,6 +1104,9 @@
     "buttons": {
       "cancel": "キャンセル",
       "save": "保存"
+    },
+    "errors": {
+      "duplicateService": "このサービスはすでに追加されています"
     }
   },
   "footer": {
@@ -2087,7 +2092,8 @@
     "createButton": "部門を作成"
   },
   "success": {
-    "examinationCompleted": "検査が正常に完了しました！"
+    "examinationCompleted": "検査が正常に完了しました！",
+    "saveIndications": "所見が正常に保存されました！"
   },
   "confirm": {
     "deleteServiceOrderTitle": "サービスオーダーの削除",

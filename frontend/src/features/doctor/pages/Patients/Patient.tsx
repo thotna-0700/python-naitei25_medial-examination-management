@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty, Tag } from "antd"
 import {
     EditOutlined,
@@ -135,6 +135,14 @@ const Patient: React.FC = () => {
         )
     })
 
+    // Sort appointments by status
+    const statusOrder = ["C", "P", "D", "X"]
+    const sortedAppointments = [...filteredAppointments].sort((a, b) => {
+        const aIndex = statusOrder.indexOf(a.status)
+        const bIndex = statusOrder.indexOf(b.status)
+        return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex)
+    })
+
     // Define table columns
     const columns = [
         {
@@ -167,7 +175,7 @@ const Patient: React.FC = () => {
                                 ? `${patientInfo.first_name || ""} ${patientInfo.last_name || ""}`.trim() || t("table.noInformation")
                                 : t("table.noInformation")}
                         </div>
-                        <div style={{ fontSize: "12px", color: "#6b7280" }}>{patientInfo?.phoneNumber || "N/A"}</div>
+                        <div style={{ fontSize: "12px", color: "#6b7280" }}>{patientInfo?.phone || "N/A"}</div>
                     </div>
                 </div>
             ),
@@ -334,10 +342,10 @@ const Patient: React.FC = () => {
                             suffixIcon={<FilterOutlined style={{ color: "#6b7280" }} />}
                         >
                             <Option value="all">{t("options.allShifts")}</Option>
-                            <Option value="MORNING">{t("shifts.morning")}</Option>
-                            <Option value="AFTERNOON">{t("shifts.afternoon")}</Option>
-                            <Option value="EVENING">{t("shifts.evening")}</Option>
-                            <Option value="NIGHT">{t("shifts.night")}</Option>
+                            <Option value="M">{t("shifts.morning")}</Option>
+                            <Option value="A">{t("shifts.afternoon")}</Option>
+                            <Option value="E">{t("shifts.evening")}</Option>
+                            <Option value="N">{t("shifts.night")}</Option>
                         </Select>
                         <Select
                             placeholder={t("placeholders.status")}
@@ -347,12 +355,10 @@ const Patient: React.FC = () => {
                             suffixIcon={<FilterOutlined style={{ color: "#6b7280" }} />}
                         >
                             <Option value="all">{t("options.allStatuses")}</Option>
-                            <Option value="PENDING">{t("status.pending")}</Option>
-                            <Option value="CONFIRMED">{t("status.confirmed")}</Option>
-                            <Option value="IN_PROGRESS">{t("status.inProgress")}</Option>
-                            <Option value="PENDING_TEST_RESULT">{t("status.pendingTestResult")}</Option>
-                            <Option value="COMPLETED">{t("status.completed")}</Option>
-                            <Option value="CANCELLED">{t("status.cancelled")}</Option>
+                            <Option value="P">{t("status.pending")}</Option>
+                            <Option value="C">{t("status.confirmed")}</Option>
+                            <Option value="D">{t("status.completed")}</Option>
+                            <Option value="X">{t("status.cancelled")}</Option>
                         </Select>
                         <Button icon={<ClearOutlined />} onClick={handleClearFilters} type="text">
                             {t("buttons.clearFilters")}
@@ -429,7 +435,7 @@ const Patient: React.FC = () => {
                     ) : (
                         <Table
                             columns={columns}
-                            dataSource={filteredAppointments}
+                            dataSource={sortedAppointments}
                             rowKey="appointmentId"
                             pagination={{
                                 current: paginatedData.pageNo + 1, // Convert from 0-based to 1-based

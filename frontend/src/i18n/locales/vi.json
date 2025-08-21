@@ -607,7 +607,8 @@
     "noPrescriptionsFound": "Không tìm thấy đơn thuốc nào",
     "noMedicinesInPrescription": "Chưa có thuốc trong đơn này",
     "noTestResults": "Chưa có kết quả xét nghiệm",
-    "noNotes": "Chưa có ghi chú"
+    "noNotes": "Chưa có ghi chú",
+    "noOrdersFound": "Chưa có chỉ định nào"
   },
   "options": {
     "allShifts": "Tất cả các ca",
@@ -731,6 +732,7 @@
     "patientCode": "Mã bệnh nhân",
     "date": "Ngày",
     "time": "Giờ",
+    "doctor": "Bác sĩ",
     "doctorNotes": "Ghi chú của bác sĩ",
     "prescription": "Đơn thuốc",
     "prescriptionDate": "Ngày kê đơn",
@@ -1100,6 +1102,9 @@
     "buttons": {
       "cancel": "Hủy",
       "save": "Lưu"
+    },
+    "errors": {
+        "duplicateService": "Không thể thêm dịch vụ giống nhau nhiều lần"
     }
   },
   "footer": {
@@ -2094,7 +2099,8 @@
     "createButton": "Tạo phòng ban"
   },
   "success": {
-    "examinationCompleted": "Hoàn thành khám bệnh!"
+    "examinationCompleted": "Hoàn thành khám bệnh!",
+    "saveIndications": "Lưu chỉ định thành công!"
   },
 "confirm": {
     "deleteServiceOrderTitle": "Xóa đơn dịch vụ",

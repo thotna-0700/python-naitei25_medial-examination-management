@@ -620,7 +620,8 @@
     "noPrescriptions": "No prescriptions found",
     "noMedicinesInPrescription": "No medicines in this prescription",
     "noTestResults": "No test results",
-    "noNotes": "No notes"
+    "noNotes": "No notes",
+    "noOrdersFound": "No orders found"
   },
   "options": {
     "allShifts": "All shifts",
@@ -694,6 +695,7 @@
     "patientCode": "Patient Code",
     "date": "Date",
     "time": "Time",
+    "doctor": "Doctor",
     "doctorNotes": "Doctor's Notes",
     "prescription": "Prescription",
     "prescriptionDate": "Prescription Date",
@@ -1107,6 +1109,9 @@
     "buttons": {
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "errors": {
+      "duplicateService": "Cannot add the same service multiple times"
     }
   },
   "footer": {
@@ -2091,7 +2096,8 @@
     "createButton": "Create Department"
   },
   "success": {
-    "examinationCompleted": "Examination completed successfully!"
+    "examinationCompleted": "Examination completed successfully!",
+    "saveIndications": "Indications saved successfully!"
   },
   "confirm": {
     "deleteServiceOrderTitle": "Delete Service Order",

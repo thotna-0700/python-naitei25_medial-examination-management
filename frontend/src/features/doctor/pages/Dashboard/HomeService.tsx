@@ -78,7 +78,7 @@ const HomeService: React.FC = () => {
         number: order.number,
         orderTime: order.order_time,
       }));
-      console.log("Enriched Orders:", enrichedOrders);
+
       // Lấy thông tin appointment cho từng order
       const appointmentPromises = enrichedOrders.map(async (order) => {
         try {

@@ -37,6 +37,8 @@ import type { ServiceOrder } from "../../types/serviceOrder"
 import { getServiceOrderById, updateServiceOrder, deleteServiceOrder } from "../../services/serviceOrderService"
 import type { Appointment } from "../../types/appointment"
 import dayjs from "dayjs"
+import utc from "dayjs/plugin/utc"
+dayjs.extend(utc)
 import { api } from "../../../../shared/services/api"
 
 const { Title, Text } = Typography
@@ -81,6 +83,9 @@ const PatientDetail: React.FC = () => {
         fetchRoomNote()
     }, [currentServiceOrder, roomNote])
 
+    // Determine if the order is completed
+    const isCompleted = currentServiceOrder?.orderStatus === "C"
+
     // Only get orderId from URL param
     const orderId = orderIdParam
 
@@ -115,12 +120,13 @@ const PatientDetail: React.FC = () => {
                 result: raw.result,
                 number: raw.number,
                 orderTime: raw.order_time,
-                resultTime: raw.result_time,
+                resultTime: raw.result_time ?? dayjs().add(1, "hour").format("YYYY-MM-DDTHH:mm:ss"),
                 createdAt: raw.created_at,
                 resultFileUrl: raw.result_file_url,
                 resultFilePublicId: raw.result_file_public_id,
             }
             setCurrentServiceOrder(freshServiceOrder)
+
             // Lấy thông tin bệnh nhân ngay sau khi lấy freshServiceOrder
             if (freshServiceOrder.appointmentId) {
                 try {
@@ -132,6 +138,7 @@ const PatientDetail: React.FC = () => {
             } else {
                 setPatientDetail(null)
             }
+
             // Set display name for file: orderId_serviceName.pdf
             const displayFileName = `${freshServiceOrder.orderId}_${freshServiceOrder.serviceName || "result"}.pdf`
             form.setFieldsValue({
@@ -157,23 +164,6 @@ const PatientDetail: React.FC = () => {
             setLoading(false)
         }
     }
-
-        useEffect(() => {
-        const fetchPatientDetail = async () => {
-            if (currentServiceOrder?.appointment_id) {
-                try {
-                    // Gọi service để lấy thông tin bệnh nhân
-                    const detail = await patientService.getPatientDetail(currentServiceOrder.appointmentId)
-                    setPatientDetail(detail)
-                } catch (error) {
-                    setPatientDetail(null)
-                }
-            } else {
-                setPatientDetail(null)
-            }
-        }
-        fetchPatientDetail()
-    }, [currentServiceOrder])
 
     const fetchNotes = async () => {
         if (!currentServiceOrder?.appointmentId) {
@@ -252,16 +242,15 @@ const PatientDetail: React.FC = () => {
             } else if (isExistingFileRemoved) {
                 finalResultUrl = ""
             }
-
-            const localDateTime = dayjs().format("YYYY-MM-DDTHH:mm:ss")
-
             const updateData: Partial<ServiceOrder> = {
                 ...currentServiceOrder,
                 orderStatus: form.getFieldValue("orderStatus"),
                 result: finalResultUrl,
-                resultTime: form.getFieldValue("orderStatus") === "C" && !currentServiceOrder.resultTime ? localDateTime : currentServiceOrder.resultTime,
+                // Save the original time from the form, preserving timezone if present
+                resultTime: form.getFieldValue("resultTime")
+                    ? form.getFieldValue("resultTime").toISOString()
+                    : currentServiceOrder.resultTime,
             }
-
             const updatedOrder = await updateServiceOrder(currentServiceOrder.serviceId, orderId, updateData as ServiceOrder)
 
             message.success("Cập nhật kết quả xét nghiệm thành công")
@@ -272,25 +261,6 @@ const PatientDetail: React.FC = () => {
             message.error("Có lỗi xảy ra khi cập nhật kết quả")
         } finally {
             setSaving(false)
-        }
-    }
-
-    const handleDelete = async () => {
-        if (!currentServiceOrder) {
-            message.error("Không tìm thấy thông tin đơn xét nghiệm")
-            return
-        }
-
-        setDeleting(true)
-        try {
-            await deleteServiceOrder(currentServiceOrder.serviceId, orderId)
-            message.success("Xóa đơn xét nghiệm thành công")
-            navigate(-1)
-        } catch (error) {
-            console.error("Error deleting service order:", error)
-            message.error("Có lỗi xảy ra khi xóa đơn xét nghiệm")
-        } finally {
-            setDeleting(false)
         }
     }
 
@@ -335,7 +305,14 @@ const PatientDetail: React.FC = () => {
     const formatDateTime = (dateString?: string) => {
         if (!dateString) return "Chưa có"
         try {
-            return new Date(dateString).toLocaleString("vi-VN")
+            const d = new Date(dateString)
+            const pad = (n: number) => n.toString().padStart(2, '0')
+            const hour = pad(d.getHours())
+            const minute = pad(d.getMinutes())
+            const day = pad(d.getDate())
+            const month = pad(d.getMonth() + 1)
+            const year = d.getFullYear()
+            return `${hour}:${minute} ${day}/${month}/${year}`
         } catch (e) {
             return "Định dạng không hợp lệ"
         }
@@ -347,9 +324,9 @@ const PatientDetail: React.FC = () => {
         }
 
         try {
-            const response = await api.post(`/appointments/${currentServiceOrder.appointmentId}/notes`, {
+            const response = await api.post(`appointment-notes/appointment/${currentServiceOrder.appointmentId}/notes/create/`, {
                 content: noteText,
-                noteType: "DOCTOR",
+                note_type: "D",
             })
             setAppointmentNotes([...appointmentNotes, response.data])
             setNoteText("")
@@ -366,9 +343,9 @@ const PatientDetail: React.FC = () => {
         }
 
         try {
-            await api.delete(`/appointments/${currentServiceOrder.appointmentId}/notes/${noteId}`)
-            setAppointmentNotes(appointmentNotes.filter((note) => note.noteId !== noteId))
+            await api.delete(`/appointment-notes/${noteId}/`)
             message.success("Xóa ghi chú thành công")
+            handleRefreshAll()
         } catch (error) {
             console.error("Error deleting note:", error)
             message.error("Xóa ghi chú thất bại")
@@ -431,18 +408,6 @@ const PatientDetail: React.FC = () => {
                             <Button icon={<ReloadOutlined />} onClick={handleRefreshAll} loading={loading}>
                                 Làm mới
                             </Button>
-                            <Popconfirm
-                                title="Xóa đơn xét nghiệm"
-                                description="Bạn có chắc chắn muốn xóa đơn xét nghiệm này?"
-                                onConfirm={handleDelete}
-                                okText="Xóa"
-                                cancelText="Hủy"
-                                okButtonProps={{ danger: true }}
-                            >
-                                <Button danger icon={<DeleteOutlined />} loading={deleting}>
-                                    Xóa đơn
-                                </Button>
-                            </Popconfirm>
                         </Space>
                     </div>
 
@@ -458,7 +423,7 @@ const PatientDetail: React.FC = () => {
                                     <Input
                                         value={
                                             roomNote
-                                                || `Phòng ${currentServiceOrder.roomId}`
+                                            || `Phòng ${currentServiceOrder.roomId}`
                                         }
                                         disabled
                                         style={{ color: "black" }}
@@ -486,6 +451,7 @@ const PatientDetail: React.FC = () => {
                                         showTime
                                         style={{ width: "100%" }}
                                         format="HH:mm DD/MM/YYYY"
+                                        disabled={isCompleted}
                                     />
                                 </Form.Item>
                             </Col>
@@ -495,7 +461,7 @@ const PatientDetail: React.FC = () => {
                                     name="orderStatus"
                                     rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
                                 >
-                                    <Select style={{ width: "180px" }}>
+                                    <Select style={{ width: "180px" }} disabled={isCompleted}>
                                         <Option value="O">Đang chờ</Option>
                                         <Option value="C">Đã hoàn thành</Option>
                                     </Select>
@@ -594,7 +560,7 @@ const PatientDetail: React.FC = () => {
                                             showRemoveIcon: true,
                                         }}
                                     >
-                                        <Button icon={<UploadOutlined />}>
+                                        <Button icon={<UploadOutlined />} disabled={isCompleted}>
                                             {form.getFieldValue("result")?.length > 0 ? "Thay đổi file PDF" : "Tải lên file PDF"}
                                         </Button>
                                     </Upload>
@@ -603,7 +569,7 @@ const PatientDetail: React.FC = () => {
                         </Row>
                         <div className="flex justify-end space-x-4">
                             <Button onClick={handleBack}>Hủy</Button>
-                            <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving}>
+                            <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving} disabled={isCompleted}>
                                 Lưu kết quả
                             </Button>
                         </div>
@@ -733,9 +699,6 @@ const PatientDetail: React.FC = () => {
                                 <div className="mb-6">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="text-gray-700 font-medium">Ghi chú</h3>
-                                        <Button icon={<ReloadOutlined />} onClick={fetchNotes}>
-                                            Làm mới
-                                        </Button>
                                     </div>
 
                                     <div className="mb-4">
@@ -766,19 +729,19 @@ const PatientDetail: React.FC = () => {
                                                         <div className="flex items-center mb-2">
                                                             <MessageOutlined style={{ marginRight: 8 }} />
                                                             <span className="font-medium">
-                                                                {note.noteType === "DOCTOR" ? note.doctorName || "Bác sĩ" : "Bệnh nhân"}
+                                                                {note.note_type === "D" ? t("labels.doctor") : t("labels.patient")}
                                                             </span>
                                                         </div>
                                                         <p className="text-gray-700">{note.content}</p>
                                                         <p className="text-xs text-gray-500 mt-2">
-                                                            {formatDateTime(note.createdAt)}
+                                                            {formatDateTime(note.created_at)}
                                                         </p>
                                                     </div>
                                                     <Button
                                                         type="text"
                                                         danger
                                                         icon={<CloseOutlined />}
-                                                        onClick={() => handleDeleteNote(note.noteId)}
+                                                        onClick={() => handleDeleteNote(note.id)}
                                                     />
                                                 </div>
                                             </div>
