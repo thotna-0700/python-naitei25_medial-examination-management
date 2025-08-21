@@ -161,7 +161,11 @@
     "noStaffInfo": "Không có thông tin nhân viên",
     "prev": "Trước",
     "next": "Sau",
-    "page": "Trang"
+    "page": "Trang",
+    "sort": "Sắp xếp",
+    "sortAZ": "Tên A → Z",
+    "sortZA": "Tên Z → A",
+    "pageInfo": "Hiển thị {{end}} trên tổng số {{total}} phòng ban"
   },
   "navigation": {
     "home": "Trang chủ",
@@ -607,7 +611,8 @@
     "noPrescriptionsFound": "Không tìm thấy đơn thuốc nào",
     "noMedicinesInPrescription": "Chưa có thuốc trong đơn này",
     "noTestResults": "Chưa có kết quả xét nghiệm",
-    "noNotes": "Chưa có ghi chú"
+    "noNotes": "Chưa có ghi chú",
+    "noOrdersFound": "Chưa có chỉ định nào"
   },
   "options": {
     "allShifts": "Tất cả các ca",
@@ -731,6 +736,7 @@
     "patientCode": "Mã bệnh nhân",
     "date": "Ngày",
     "time": "Giờ",
+    "doctor": "Bác sĩ",
     "doctorNotes": "Ghi chú của bác sĩ",
     "prescription": "Đơn thuốc",
     "prescriptionDate": "Ngày kê đơn",
@@ -786,7 +792,7 @@
     "noServices": "Không tìm thấy dịch vụ.",
     "viewPrescription": "Xem đơn thuốc",
     "title": "Chi tiết Hồ sơ Khám bệnh",
-    "diagnosis": "Chẩn đoán: ",
+    "diagnosis": "Chẩn đoán",
     "bloodPressure": "Huyết áp",
     "heartRate": "Nhịp tim",
     "bloodSugar": "Đường huyết",
@@ -1100,6 +1106,9 @@
     "buttons": {
       "cancel": "Hủy",
       "save": "Lưu"
+    },
+    "errors": {
+        "duplicateService": "Không thể thêm dịch vụ giống nhau nhiều lần"
     }
   },
   "footer": {
@@ -1729,7 +1738,7 @@
     "usedServices": "Dịch vụ đã sử dụng",
     "noServices": "Không có dịch vụ",
     "totalServiceCost": "Tổng tiền dịch vụ",
-    "details": "Chi tiết",
+    "details": "Đặt lịch hẹn khám:",
     "totalBookingCost": "Tổng tiền đặt lịch",
     "insuranceCovered": "Bảo hiểm y tế chi trả",
     "amountToPay": "Số tiền phải thanh toán",
@@ -2094,6 +2103,11 @@
     "createButton": "Tạo phòng ban"
   },
   "success": {
-    "examinationCompleted": "Hoàn thành khám bệnh!"
+    "examinationCompleted": "Hoàn thành khám bệnh!",
+    "saveIndications": "Lưu chỉ định thành công!"
+  },
+"confirm": {
+    "deleteServiceOrderTitle": "Xóa đơn dịch vụ",
+    "deleteServiceOrderDesc": "Bạn có chắc chắn muốn xóa đơn dịch vụ này không?"
   }
 }

@@ -161,7 +161,11 @@
     "noStaffInfo": "スタッフ情報はありません",
     "prev": "前へ",
     "next": "次へ",
-    "page": "ページ"
+    "page": "ページ",
+    "sort": "並び替え",
+    "sortAZ": "名前 A → Z",
+    "sortZA": "名前 Z → A",
+    "pageInfo": "全 {{total}} 部門のうち {{end}} を表示中"
   },
   "navigation": {
     "home": "ホーム",
@@ -609,7 +613,8 @@
     "noPrescriptions": "処方箋が見つかりません",
     "noMedicinesInPrescription": "この処方箋には薬がありません",
     "noTestResults": "検査結果がありません",
-    "noNotes": "メモがありません"
+    "noNotes": "メモがありません",
+    "noOrdersFound": "指示が見つかりません"
   },
   "options": {
     "allShifts": "すべてのシフト",
@@ -690,6 +695,7 @@
     "patientCode": "患者コード",
     "date": "日付",
     "time": "時間",
+    "doctor": "医師",
     "doctorNotes": "医師のメモ",
     "prescription": "処方箋",
     "prescriptionDate": "処方日",
@@ -744,7 +750,7 @@
     "noServices": "サービスが見つかりません。",
     "viewPrescription": "処方箋を見る",
     "title": "診療記録の詳細",
-    "diagnosis": "診断: ",
+    "diagnosis": "診断",
     "bloodPressure": "血圧",
     "heartRate": "心拍数",
     "bloodSugar": "血糖値",
@@ -1102,6 +1108,9 @@
     "buttons": {
       "cancel": "キャンセル",
       "save": "保存"
+    },
+    "errors": {
+      "duplicateService": "このサービスはすでに追加されています"
     }
   },
   "footer": {
@@ -2087,6 +2096,11 @@
     "createButton": "部門を作成"
   },
   "success": {
-    "examinationCompleted": "検査が正常に完了しました！"
+    "examinationCompleted": "検査が正常に完了しました！",
+    "saveIndications": "所見が正常に保存されました！"
+  },
+  "confirm": {
+    "deleteServiceOrderTitle": "サービスオーダーの削除",
+    "deleteServiceOrderDesc": "このサービスオーダーを削除してもよろしいですか？"
   }
 }

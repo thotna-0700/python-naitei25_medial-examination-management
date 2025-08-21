@@ -20,6 +20,7 @@ import {
     Select,
     Tag,
     Tooltip,
+    Popconfirm,
 } from "antd"
 import {
     PlusOutlined,
@@ -31,6 +32,9 @@ import {
     CloseOutlined,
     MedicineBoxOutlined,
     UserOutlined,
+    SaveOutlined,
+    ExperimentOutlined,
+    DeleteOutlined
 } from "@ant-design/icons"
 import { PrescriptionModal } from "../../components/PrecriptionModal"
 import { ServiceOrderModal } from "../../components/ServiceOrderModal"
@@ -47,6 +51,9 @@ import { appointmentService } from "../../services/appointmentService"
 import { stringToDate, dateToString } from "../../services/dateHelpServices"
 import { useTranslation } from "react-i18next"
 import { getAppointmentStatusColor } from "../../services/appointmentService"
+import { getServiceOrderById, updateServiceOrder, deleteServiceOrder } from "../../services/serviceOrderService"
+import { api } from "../../../../shared/services/api"
+
 
 const { Title, Text } = Typography
 const { TabPane } = Tabs
@@ -245,13 +252,32 @@ const PatientDetail: React.FC = () => {
         }
     }
 
-    const handleDeleteNote = (noteId?: number) => {
+    const handleDeleteNote = async (appointmentId?: number, noteId?: number) => {
         if (!noteId) {
             message.error(t("errors.noNoteId"))
             return
         }
+        try {
+            await api.delete(`/appointment-notes/${noteId}/`)
+            message.success("Xóa ghi chú thành công")
+            refreshAll(appointmentId)
+        } catch (error) {
+            console.error("Error deleting note:", error)
+            message.error("Xóa ghi chú thất bại")
+        }
+    }
 
-        deleteAppointmentNote(noteId)
+    // Xóa service order
+    const handleDeleteServiceOrder = async (orderId: number, appointmentId: number) => {
+        try {
+            await deleteServiceOrder(orderId)
+            message.success(t("success.deleteServiceOrder"))
+            if (appointmentId) {
+                await refreshAll(appointmentId)
+            }
+        } catch (error) {
+            message.error(t("errors.deleteServiceOrderFailed"))
+        }
     }
 
     const handleViewPrescriptionHistory = (prescription: Prescription) => {
@@ -300,6 +326,11 @@ const PatientDetail: React.FC = () => {
         D: "COMPLETED",
         X: "CANCELLED"
     }
+
+    // Determine if the order is completed
+    const currentAppointment = appointments.find(a => a.appointmentId === patientDetail?.appointmentId)
+    const isCompleted = currentAppointment?.status === "D"
+
     const getAppointmentStatusDisplay = (status?: string) => {
         // Try to get mapped status from context appointment
         let mappedStatus = status
@@ -555,7 +586,7 @@ const PatientDetail: React.FC = () => {
                                             name="systolicBloodPressure"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={300} className="w-full" />
+                                            <InputNumber min={0} max={300} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={7}>
@@ -564,7 +595,7 @@ const PatientDetail: React.FC = () => {
                                             name="diastolicBloodPressure"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={200} className="w-full" />
+                                            <InputNumber min={0} max={200} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={4}>
@@ -573,7 +604,7 @@ const PatientDetail: React.FC = () => {
                                             name="heartRate"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={200} className="w-full" />
+                                            <InputNumber min={0} max={200} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={4}>
@@ -582,12 +613,12 @@ const PatientDetail: React.FC = () => {
                                             name="bloodSugar"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <InputNumber min={0} max={500} className="w-full" />
+                                            <InputNumber min={0} max={500} className="w-full" disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={24}>
                                         <Form.Item label={t("labels.symptoms")} name="symptoms">
-                                            <Input.TextArea rows={4} />
+                                            <Input.TextArea rows={4} disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={24}>
@@ -596,7 +627,7 @@ const PatientDetail: React.FC = () => {
                                             name="diagnosis"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <Input.TextArea rows={4} />
+                                            <Input.TextArea rows={4} disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={24}>
@@ -605,12 +636,12 @@ const PatientDetail: React.FC = () => {
                                             name="doctorNotes"
                                             rules={[{ required: true, message: t("validation.required") }]}
                                         >
-                                            <Input.TextArea rows={4} />
+                                            <Input.TextArea rows={4} disabled={isCompleted} />
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
                                         <Form.Item name="isFollowUp" valuePropName="checked">
-                                            <Checkbox>{t("labels.followUpCheckbox")}</Checkbox>
+                                            <Checkbox disabled={isCompleted} >{t("labels.followUpCheckbox")}</Checkbox>
                                         </Form.Item>
                                     </Col>
                                     <Col span={12}>
@@ -630,7 +661,7 @@ const PatientDetail: React.FC = () => {
                                                         <DatePicker
                                                             style={{ width: "100%" }}
                                                             format="DD/MM/YYYY"
-                                                            disabled={!isFollowUp}
+                                                            disabled={!isFollowUp || isCompleted}
                                                         />
                                                     </Form.Item>
                                                 )
@@ -676,8 +707,8 @@ const PatientDetail: React.FC = () => {
                                             ) : (
                                                 <div className="space-y-4">
                                                     {serviceOrders.map((order) => (
-                                                        <div key={order.orderId} className="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
-                                                            <div>
+                                                        <div key={order.orderId} className="border border-gray-200 rounded-lg p-4 flex items-center">
+                                                            <div className="flex-1">
                                                                 <p className="text-sm font-medium">{t("labels.serviceName")}: {order.service_name || t("labels.notSpecified")}</p>
                                                                 <p className="text-sm text-gray-500">{t("labels.room")}: {order.room_id || t("labels.notSpecified")}</p>
                                                                 {order.orderTime && (
@@ -709,20 +740,37 @@ const PatientDetail: React.FC = () => {
                                                                                     document.body.removeChild(link)
                                                                                 }}
                                                                             >
-                                                                                {t("buttons.download")}
+                                                                                {t("common.download")}
                                                                             </Button>
                                                                         </div>
                                                                     </div>
                                                                 )}
                                                                 <p className="text-sm text-gray-500 mt-1">
-                                                                    {t("labels.status")}: {order.status === "C" ? t("status.completed") : t("status.pending")}
+                                                                    {t("labels.status")}: {order.order_status === "C" ? t("status.completed") : t("status.pending")}
                                                                 </p>
                                                             </div>
-                                                            <Button
-                                                                type="text"
-                                                                icon={<EyeOutlined />}
-                                                                onClick={() => handleViewTestResult(order)}
-                                                            />
+                                                            <div className="flex items-center space-x-2 ml-4">
+                                                                <Button
+                                                                    type="text"
+                                                                    icon={<EyeOutlined />}
+                                                                    onClick={() => handleViewTestResult(order)}
+                                                                />
+                                                                <Popconfirm
+                                                                    title={t("confirm.deleteServiceOrderTitle")}
+                                                                    description={t("confirm.deleteServiceOrderDesc")}
+                                                                    okText={t("common.delete")}
+                                                                    cancelText={t("common.cancel")}
+                                                                    okButtonProps={{ danger: true }}
+                                                                    onConfirm={() => handleDeleteServiceOrder(order.order_id, order.appointment_id)}
+                                                                >
+                                                                    <Button
+                                                                        size="small"
+                                                                        danger
+                                                                        disabled={isCompleted}
+                                                                        icon={<DeleteOutlined />}
+                                                                    />
+                                                                </Popconfirm>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -762,13 +810,13 @@ const PatientDetail: React.FC = () => {
                                                                 <div className="flex items-center mb-2">
                                                                     <MessageOutlined style={{ marginRight: 8 }} />
                                                                     <span className="font-medium">
-                                                                        {note.noteType === NoteType.DOCTOR ? note.doctorName || t("labels.doctor") : t("labels.patient")}
+                                                                        {note.note_type === "D" ? t("labels.doctor") : t("labels.patient")}
                                                                     </span>
                                                                 </div>
                                                                 <p className="text-gray-700">{note.content || ""}</p>
-                                                                {note.createdAt && (
+                                                                {note.created_at && (
                                                                     <p className="text-xs text-gray-500 mt-2">
-                                                                        {formatDateTime(note.createdAt)}
+                                                                        {formatDateTime(note.created_at)}
                                                                     </p>
                                                                 )}
                                                             </div>
@@ -776,7 +824,7 @@ const PatientDetail: React.FC = () => {
                                                                 type="text"
                                                                 danger
                                                                 icon={<CloseOutlined />}
-                                                                onClick={() => note.noteId && handleDeleteNote(note.noteId)}
+                                                                onClick={() => handleDeleteNote(note.appointment_id, note.id)}
                                                             />
                                                         </div>
                                                     </div>
@@ -811,7 +859,7 @@ const PatientDetail: React.FC = () => {
                                                                 <div className="flex-1">
                                                                     <p className="text-sm font-medium">{t("labels.prescription")} #{pres.id}</p>
                                                                     <p className="text-xs text-gray-500">{t("labels.prescriptionDate")}: {formatDate(pres.created_at)}</p>
-                                                                    <p className="text-xs text-gray-500">{t("labels.diagnosis")}{pres.diagnosis || t("labels.noDiagnosis")}</p>
+                                                                    <p className="text-xs text-gray-500">{t("labels.diagnosis")}: {pres.diagnosis || t("labels.noDiagnosis")}</p>
                                                                 </div>
                                                                 <Button
                                                                     type="text"

@@ -49,10 +49,13 @@ class BillResponseSerializer(serializers.ModelSerializer):
         ]
 
     def get_amount(self, obj):
-        return sum(
-            float(t.amount) for t in obj.transaction_set.all()
-            if t.status == "SUCCESS"
+        booking_fee = getattr(obj.appointment, "booking_fee", 0)
+        service_fee = sum(
+            float(order.service.price)
+            for order in obj.appointment.serviceorder_set.all()
+            if order.service and order.service.price
         )
+        return booking_fee + service_fee - (obj.insurance_discount or 0)
 
 
 # class BillSerializer(serializers.ModelSerializer):
@@ -104,7 +107,7 @@ class BillSerializer(serializers.ModelSerializer):
             'total_cost',
             'insurance_discount',
             'amount',
-            'status',           # ⚡️ dùng trực tiếp field trong model
+            'status',           
             'created_at',
             'updated_at',
             'booking_fee',

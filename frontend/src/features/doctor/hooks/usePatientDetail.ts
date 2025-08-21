@@ -145,7 +145,7 @@ export const usePatientDetail = (initialAppointmentId?: number): UsePatientDetai
     const createAppointmentNote = useCallback(async (appointmentId: number, note: CreateAppointmentNoteRequest) => {
         try {
             setSaving(true)
-            const newNote = await appointmentNoteService.createAppointmentNote(appointmentId, note)
+            const newNote = await appointmentNoteService.createNote(appointmentId, note)
             setAppointmentNotes((prev) => [...prev, newNote])
             message.success("Thêm ghi chú thành công")
         } catch (error) {

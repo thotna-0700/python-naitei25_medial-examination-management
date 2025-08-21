@@ -168,7 +168,11 @@
     "noStaffInfo": "No staff information available",
     "prev": "Previous",
     "next": "Next",
-    "page": "Page"
+    "page": "Page",
+    "sort": "Sort",
+    "sortAZ": "Name A → Z",
+    "sortZA": "Name Z → A",
+    "pageInfo": "Showing {{end}} of {{total}} departments"
   },
   "navigation": {
     "home": "Home",
@@ -620,7 +624,8 @@
     "noPrescriptions": "No prescriptions found",
     "noMedicinesInPrescription": "No medicines in this prescription",
     "noTestResults": "No test results",
-    "noNotes": "No notes"
+    "noNotes": "No notes",
+    "noOrdersFound": "No orders found"
   },
   "options": {
     "allShifts": "All shifts",
@@ -651,7 +656,7 @@
   "prescriptionDetail": {
     "prescriptionTitle": "Prescription #{{id}}",
     "prescriptionSubtitle": "Detailed prescription information and usage instructions",
-    "diagnosis": "Diagnosis: ",
+    "diagnosis": "Diagnosis",
     "noDiagnosis": "No specific diagnosis",
     "prescriptionDate": "Prescription Date",
     "overview": "Overview",
@@ -694,10 +699,11 @@
     "patientCode": "Patient Code",
     "date": "Date",
     "time": "Time",
+    "doctor": "Doctor",
     "doctorNotes": "Doctor's Notes",
     "prescription": "Prescription",
     "prescriptionDate": "Prescription Date",
-    "diagnosis": "Diagnosis: ",
+    "diagnosis": "Diagnosis",
     "followUpAppointment": "Follow-up Appointment",
     "status": "Status",
     "patientName": "Patient Name",
@@ -1107,6 +1113,9 @@
     "buttons": {
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "errors": {
+      "duplicateService": "Cannot add the same service multiple times"
     }
   },
   "footer": {
@@ -1726,7 +1735,7 @@
     "usedServices": "Used Services",
     "noServices": "No services",
     "totalServiceCost": "Total service cost",
-    "details": "Details",
+    "details": "Booking Payment Amount: ",
     "totalBookingCost": "Total booking cost",
     "insuranceCovered": "Insurance covered",
     "amountToPay": "Amount to pay",
@@ -2091,6 +2100,11 @@
     "createButton": "Create Department"
   },
   "success": {
-    "examinationCompleted": "Examination completed successfully!"
+    "examinationCompleted": "Examination completed successfully!",
+    "saveIndications": "Indications saved successfully!"
+  },
+  "confirm": {
+    "deleteServiceOrderTitle": "Delete Service Order",
+    "deleteServiceOrderDesc": "Are you sure you want to delete this service order?"
   }
 }

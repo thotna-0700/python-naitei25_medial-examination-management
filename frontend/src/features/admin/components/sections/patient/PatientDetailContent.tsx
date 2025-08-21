@@ -896,6 +896,7 @@ export function InvoicesContent() {
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [patient, setPatient] = useState<Patient | null>(null);
 
   // Pagination state for invoices
   const [invoiceCurrentPage, setInvoiceCurrentPage] = useState(1);
@@ -1064,6 +1065,9 @@ export function InvoicesContent() {
   useEffect(() => {
     if (patientId) {
       reloadBills();
+      patientService.getPatientById(Number(patientId))
+      .then(setPatient)
+      .catch(err => console.error("Error fetching patient:", err));
     }
   }, [patientId]);
 
@@ -1424,6 +1428,7 @@ export function InvoicesContent() {
           services={billServices[selectedBill.billId || 0] || []}
           isOpen={true}
           onClose={() => setSelectedBill(null)}
+          patient={patient}
         />
       )}
     </div>
