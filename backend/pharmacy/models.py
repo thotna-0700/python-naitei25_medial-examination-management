@@ -52,6 +52,7 @@ class Prescription(BaseModel):
     heart_rate = models.IntegerField(blank=True, null=True)
     blood_sugar = models.IntegerField(blank=True, null=True)
     note = models.CharField(max_length=PHARMACY_LENGTH["PRESCRIPTION_NOTE"], blank=True, null=True)
+    is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Prescription {self.prescription_id} for Patient {self.patient_id}"

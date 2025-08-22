@@ -212,12 +212,12 @@ export const pharmacyService = {
     }
   },
 
-  // ❌ Không xoá thật BE, chỉ mock cancel FE
+  // ✅ Gọi API xoá mềm prescription
   async deletePrescription(prescriptionId: number): Promise<void> {
     try {
-      console.log(`Mock cancel prescription ${prescriptionId}`);
-      // Trả về resolve, để FE tự set status = CANCEL
-      return Promise.resolve();
+      console.log(`Deleting prescription ${prescriptionId}...`);
+      await api.delete(`/prescriptions/${prescriptionId}/`);
+      console.log(`Prescription ${prescriptionId} deleted successfully`);
     } catch (error) {
       console.error("Error deleting prescription:", error);
       throw error;

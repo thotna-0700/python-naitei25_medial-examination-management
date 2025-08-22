@@ -1990,6 +1990,7 @@
           "phone": "電話番号を入力",
           "email": "メールアドレスを入力",
           "address": "住所を入力",
+          "birthday": "生年月日を選ぶ",
           "identityNumber": "身分証番号を入力",
           "insuranceNumber": "健康保険番号を入力",
           "avatar": "アバターURLを入力 (https://...)"

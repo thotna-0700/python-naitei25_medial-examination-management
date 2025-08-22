@@ -44,6 +44,9 @@ import { getServiceOrdersByAppointmentId } from "../../../services/serviceOrderS
 import { servicesService } from "../../../services/servicesService";
 import { Pagination } from "../../ui/Pagination";
 import { useTranslation } from "react-i18next";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Calendar } from "lucide-react";
 import { t } from "i18next";
 
 export function MedicalRecordsContent() {
@@ -194,16 +197,10 @@ export function MedicalRecordsContent() {
     if (!deletingPrescriptionId) return;
 
     try {
-      setPrescriptions((prev) =>
-        prev
-          .map((p) =>
-            p.id === deletingPrescriptionId ? { ...p, status: "cancel" } : p
-          )
-          .filter((p) => p.status !== "cancel")
-      )
-
-      closeDeleteConfirmModal()
-      alert(t("patientDetail.medicalRecords.success.delete"))
+      await pharmacyService.deletePrescription(deletingPrescriptionId); // gọi API soft delete
+      await fetchMedicalRecords(); // load lại danh sách từ BE
+      closeDeleteConfirmModal();
+      alert(t("patientDetail.medicalRecords.success.delete"));
     } catch (err) {
       console.error("Lỗi khi xóa bệnh án:", err);
       alert(t("patientDetail.medicalRecords.error.delete"));
@@ -390,7 +387,7 @@ export function AppointmentsContent() {
 
   // Pagination state for appointments
   const [appointmentCurrentPage, setAppointmentCurrentPage] = useState(1);
-  const appointmentItemsPerPage = 10; // 10 appointments per page
+  const appointmentItemsPerPage = 4; // 10 appointments per page
 
   // Filter, sort, and search state for appointments
   const [appointmentSearchTerm, setAppointmentSearchTerm] = useState("");
@@ -635,25 +632,25 @@ export function AppointmentsContent() {
             </TableCell>
             <TableCell
               isHeader
-              className="px-4 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+              className="px-7 py-3 font-medium text-start text-gray-800 text-theme-sm dark:text-gray-400"
             >
               {t("patientDetail.appointments.table.headers.doctor")}
             </TableCell>
             <TableCell
               isHeader
-              className="px-4 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+              className="px-8 py-3 font-medium text-start text-gray-800 text-theme-sm dark:text-gray-400"
             >
               {t("patientDetail.appointments.table.headers.status")}
             </TableCell>
             <TableCell
               isHeader
-              className="px-4 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+              className="px-8 py-3 font-medium text-start text-gray-800 text-theme-sm dark:text-gray-400"
             >
               {t("patientDetail.appointments.table.headers.time")}
             </TableCell>
             <TableCell
               isHeader
-              className="px-3 py-3 font-medium text-gray-800 text-theme-sm dark:text-gray-400"
+              className="px-8 py-3 font-medium text-start text-gray-800 text-theme-sm dark:text-gray-400"
             >
               {t("patientDetail.appointments.table.headers.actions")}
             </TableCell>
@@ -678,7 +675,7 @@ export function AppointmentsContent() {
 
               return paginatedAppointments.map((appt) => (
                 <TableRow key={appt.appointmentId}>
-                  <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
+                  <TableCell className="px-10 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
                     CH{appt.appointmentId.toString().padStart(4, "0")}
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
@@ -1066,8 +1063,8 @@ export function InvoicesContent() {
     if (patientId) {
       reloadBills();
       patientService.getPatientById(Number(patientId))
-      .then(setPatient)
-      .catch(err => console.error("Error fetching patient:", err));
+        .then(setPatient)
+        .catch(err => console.error("Error fetching patient:", err));
     }
   }, [patientId]);
 
@@ -1289,7 +1286,7 @@ export function InvoicesContent() {
                         <TableCell className="px-6 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                           #{(bill.billId || 0).toString().padStart(4, "0")}
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
+                        <TableCell className="px-6 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                           {services.length > 0
                             ? format(
                               new Date(
@@ -1322,7 +1319,7 @@ export function InvoicesContent() {
                           <span className="text-gray-400 text-xs">Không có dịch vụ</span>
                         )}
                       </TableCell> */}
-                        <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
+                        <TableCell className="px-7 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                           <Badge
                             size="sm"
                             color={
@@ -1438,6 +1435,7 @@ export function InvoicesContent() {
 // PatientInfoContent
 export function PatientInfoContent({ patient }: { patient: Patient }) {
   const { t } = useTranslation();
+  const [currentPatient, setCurrentPatient] = useState<Patient>(patient);
   const { patientId } = useParams();
   const [showEditModal, setShowEditModal] = useState(false);
   const [editData, setEditData] = useState<PatientUpdateDto>(
@@ -1466,6 +1464,11 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
       });
     }
   }, [patient]);
+
+  useEffect(() => {
+    setCurrentPatient(patient);
+  }, [patient]);
+
 
   const handleEditChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -1502,6 +1505,7 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
       const updatedPatient = await patientService.getPatientById(
         Number(patientId)
       );
+      setCurrentPatient(updatedPatient);
       // This assumes PatientDetailLayout will re-render with the new patient prop
       // In a real app, you might want to pass a callback to update parent state
       // For now, relying on the parent (PatientDetail) to re-fetch if needed.
@@ -1536,53 +1540,53 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.fullName")}</p>
-            <p className="font-medium">{patient?.fullName}</p>
+            <p className="font-medium">{currentPatient?.fullName}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.patientId")}</p>
             <p className="font-medium">
-              BN{patient?.patientId?.toString().padStart(4, "0")}
+              BN{currentPatient?.patientId?.toString().padStart(4, "0")}
             </p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.birthday")}</p>
-            <p className="font-medium">{patient?.birthday}</p>
+            <p className="font-medium">{currentPatient?.birthday}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.gender")}</p>
             <p className="font-medium">
-              {patient?.gender === "MALE"
+              {currentPatient?.gender === "MALE"
                 ? t("common.gender.male")
-                : patient?.gender === "FEMALE"
+                : currentPatient?.gender === "FEMALE"
                   ? t("common.gender.female")
                   : t("common.gender.other")}
             </p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.phone")}</p>
-            <p className="font-medium">{patient?.phone || ""}</p>
+            <p className="font-medium">{currentPatient?.phone || ""}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.email")}</p>
-            <p className="font-medium">{patient?.email || ""}</p>
+            <p className="font-medium">{currentPatient?.email || ""}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.address")}</p>
-            <p className="font-medium">{patient?.address}</p>
+            <p className="font-medium">{currentPatient?.address}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.insuranceNumber")}</p>
-            <p className="font-medium">{patient?.insuranceNumber}</p>
+            <p className="font-medium">{currentPatient?.insuranceNumber}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.identityNumber")}</p>
-            <p className="font-medium">{patient?.identityNumber}</p>
+            <p className="font-medium">{currentPatient?.identityNumber}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.createdAt")}</p>
             <p className="font-medium">
-              {patient?.createdAt
-                ? format(new Date(patient?.createdAt), "dd-MM-yyyy")
+              {currentPatient?.createdAt
+                ? format(new Date(currentPatient?.createdAt), "dd-MM-yyyy")
                 : ""}
             </p>
           </div>
@@ -1675,14 +1679,26 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           {t("patientDetail.info.form.birthday")} <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          name="birthday"
-                          type="date"
-                          value={editData.birthday || ""}
-                          onChange={handleEditChange}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                          required
-                        />
+                        <div className="relative w-full">
+                          <DatePicker
+                            selected={editData.birthday ? new Date(editData.birthday) : null}
+                            onChange={(date: Date | null) =>
+                              setEditData((prev) => ({
+                                ...prev,
+                                birthday: date ? date.toISOString().split("T")[0] : "",
+                              }))
+                            }
+                            dateFormat="yyyy-MM-dd"
+                            className="w-full p-3 pr-10 border border-gray-300 rounded-lg 
+                                      focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            placeholderText={t("patientDetail.info.form.placeholders.birthday")}
+                            wrapperClassName="w-full"
+                            showMonthDropdown
+                            showYearDropdown
+                            dropdownMode="select"  
+                            required
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2012,7 +2028,7 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
         <div>
           <h3 className="font-medium mb-2">{t("patientDetail.healthInfo.allergies")}</h3>
           <ul className="list-disc pl-5 space-y-1">
-            {patient?.allergies?.split("\n").map((item, idx) => (
+            {patientData?.allergies?.split("\n").map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
           </ul>
@@ -2022,16 +2038,16 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
           <div className="grid grid-cols-3 gap-4">
             <div className="p-3 bg-gray-50 rounded-lg text-center">
               <p className="text-gray-500 text-sm">{t("patientDetail.healthInfo.height")}</p>
-              <p className="font-medium">{patient?.height} cm</p>
+              <p className="font-medium">{patientData?.height} cm</p>
             </div>
             <div className="p-3 bg-gray-50 rounded-lg text-center">
               <p className="text-gray-500 text-sm">{t("patientDetail.healthInfo.weight")}</p>
-              <p className="font-medium">{patient?.weight} kg</p>
+              <p className="font-medium">{patientData?.weight} kg</p>
             </div>
             <div className="p-3 bg-gray-50 rounded-lg text-center">
               <p className="text-gray-500 text-sm">{t("patientDetail.healthInfo.bloodType")}</p>
               <p className="font-medium">
-                {patient?.bloodType || t("common.notAvailable")}
+                {patientData?.bloodType || t("common.notAvailable")}
               </p>
             </div>
           </div>
@@ -2436,11 +2452,18 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
     if (!patientId) return;
     try {
       const data = await patientService.getEmergencyContacts(Number(patientId));
-      setContacts(data);
+      const mapped = data.map((c: any) => ({
+        contactId: c.id ?? c.contactId,
+        contactName: c.contact_name ?? c.contactName,
+        contactPhone: c.contact_phone ?? c.contactPhone,
+        relationship: c.relationship,
+      }));
+      setContacts(mapped);
     } catch (error) {
       setErrorModal(t('patientDetail.contacts.error.load'));
     }
   };
+
 
   // Apply filters and sort for emergency contacts
   const applyContactFiltersAndSort = () => {
@@ -2524,20 +2547,34 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
 
       if (editContact.contactId === 0) {
         // ➡️ Trường hợp thêm mới
-        result = await patientService.addEmergencyContact(
-          Number(patientId),
-          editData
-        );
-        setContacts((prev) => [...prev, result]);
+        const created = await patientService.addEmergencyContact(Number(patientId), editData);
+        const newContact = {
+          contactId: created.id,
+          contactName: created.contact_name,
+          contactPhone: created.contact_phone,
+          relationship: created.relationship,
+        };
+        setContacts((prev) => [...prev, newContact]);
+
       } else {
         // ➡️ Trường hợp cập nhật
-        result = await patientService.updateEmergencyContact(
+        const updated = await patientService.updateEmergencyContact(
           Number(patientId),
           editContact.contactId,
           editData
         );
+
+        const updatedContact = {
+          contactId: updated.id,
+          contactName: updated.contact_name,
+          contactPhone: updated.contact_phone,
+          relationship: updated.relationship,
+        };
+
         setContacts((prev) =>
-          prev.map((c) => (c.contactId === result.contactId ? result : c))
+          prev.map((c) =>
+            c.contactId === updatedContact.contactId ? updatedContact : c
+          )
         );
       }
 
@@ -2609,7 +2646,7 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
         <button
           onClick={() =>
             setEditContact({
-              contactId: 0, 
+              contactId: 0,
               contactName: "",
               contactPhone: "",
               relationship: "FAMILY",
@@ -2967,193 +3004,6 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// PaymentsContent
-export function PaymentsContent() {
-  const { t } = useTranslation();
-  interface Payment {
-    id: string;
-    transactionDate: string;
-    status: "Thành công" | "Lỗi" | "Đang chờ";
-    amount: string;
-    method: "Tiền mặt" | "Chuyển khoản" | "Thẻ";
-  }
-
-  const paymentData: Payment[] = [
-    {
-      id: "P2025-0045",
-      transactionDate: "2025-02-15 12:50",
-      status: "Đang chờ",
-      amount: "2.250.000 VNĐ",
-      method: "Thẻ",
-    },
-    {
-      id: "P2025-0023",
-      transactionDate: "2025-01-14 12:50",
-      status: "Thành công",
-      amount: "150.000 VNĐ",
-      method: "Chuyển khoản",
-    },
-    {
-      id: "P2025-0018",
-      transactionDate: "2025-01-13 12:50",
-      status: "Lỗi",
-      amount: "150.000 VNĐ",
-      method: "Chuyển khoản",
-    },
-    {
-      id: "P2025-0011",
-      transactionDate: "2025-01-12 12:50",
-      status: "Thành công",
-      amount: "500.000 VNĐ",
-      method: "Tiền mặt",
-    },
-    {
-      id: "P2025-0023",
-      transactionDate: "2025-01-11 12:50",
-      status: "Thành công",
-      amount: "150.000 VNĐ",
-      method: "Chuyển khoản",
-    },
-    {
-      id: "P2025-0018",
-      transactionDate: "2025-01-10 12:50",
-      status: "Lỗi",
-      amount: "150.000 VNĐ",
-      method: "Chuyển khoản",
-    },
-    {
-      id: "P2025-0011",
-      transactionDate: "2025-01-08 12:50",
-      status: "Đang chờ",
-      amount: "500.000 VNĐ",
-      method: "Tiền mặt",
-    },
-  ];
-  return (
-    <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
-      <h2 className="text-xl font-semibold mb-4">Thanh toán</h2>
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
-        <div className="max-w-full overflow-x-auto">
-          <Table>
-            <TableHeader className="border-b border-gray-100 bg-slate-600/10 dark:border-white/[0.05]">
-              <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
-                >
-                  Mã giao dịch
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
-                >
-                  Thời gian thanh toán
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 ml-30px py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
-                >
-                  Tình trạng
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
-                >
-                  Số tiền
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-4 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
-                >
-                  Phương thức
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-3 font-medium text-gray-800 text-start text-theme-sm dark:text-gray-400"
-                >
-                  Hành động
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {paymentData.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm font-bold dark:text-gray-400">
-                    GD{transaction.id.toString().padStart(4, "0")}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                    {transaction.transactionDate}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                    <Badge
-                      size="sm"
-                      color={
-                        transaction.status === "Thành công"
-                          ? "success"
-                          : transaction.status === "Đang chờ"
-                            ? "warning"
-                            : "error"
-                      }
-                    >
-                      {transaction.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-green-700 font-semibold text-theme-sm dark:text-gray-400">
-                    {transaction.amount}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                    {transaction.method}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 flex items-center text-gray-500 text-theme-md dark:text-gray-400">
-                    <button className="flex items-center gap-2 px-5 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50">
-                      <svg
-                        className="stroke-current fill-white dark:fill-gray-800"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M2.29004 5.90393H17.7067"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M17.7075 14.0961H2.29085"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M12.0826 3.33331C13.5024 3.33331 14.6534 4.48431 14.6534 5.90414C14.6534 7.32398 13.5024 8.47498 12.0826 8.47498C10.6627 8.47498 9.51172 7.32398 9.51172 5.90415C9.51172 4.48432 10.6627 3.33331 12.0826 3.33331Z"
-                          fill="currentColor"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        />
-                        <path
-                          d="M7.91745 11.525C6.49762 11.525 5.34662 12.676 5.34662 14.0959C5.34661 15.5157 6.49762 16.6667 7.91745 16.6667C9.33728 16.6667 10.4883 15.5157 10.4883 14.0959C10.4883 12.676 9.33728 11.525 7.91745 11.525Z"
-                          fill="currentColor"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        />
-                      </svg>
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
     </div>
   );
 }

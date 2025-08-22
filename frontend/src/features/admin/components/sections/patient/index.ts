@@ -5,7 +5,6 @@ export {
   MedicalRecordsContent,
   AppointmentsContent,
   InvoicesContent,
-  PaymentsContent,
   PatientInfoContent,
   HealthInfoContent
 } from './PatientDetailContent';

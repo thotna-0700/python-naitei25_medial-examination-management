@@ -54,11 +54,15 @@ class PrescriptionViewSet(viewsets.ViewSet):
             return Response(PrescriptionSerializer(prescription).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def destroy(self, request, pk=None):
-        if not request.user.groups.filter(name='ADMIN').exists():
-            return Response({"error": _("Chỉ admin mới có quyền xóa")}, status=status.HTTP_403_FORBIDDEN)
-        PharmacyService().delete_prescription(pk)
-        return Response({"message": _("Xóa thành công đơn thuốc")}, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        prescription_id = kwargs.get("pk")
+        try:
+            PharmacyService().delete_prescription(prescription_id)
+            return Response({"message": _("Prescription deleted successfully")}, status=status.HTTP_204_NO_CONTENT)
+        except Prescription.DoesNotExist:
+            return Response({"error": _("Prescription not found")}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], url_path='detail')
     def add_medicine_to_prescription(self, request):
