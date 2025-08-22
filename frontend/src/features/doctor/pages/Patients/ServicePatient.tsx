@@ -18,6 +18,8 @@ import { api } from "../../../../shared/services/api"
 import { getServiceOrdersByRoomId } from "../../services/serviceOrderService"
 import { appointmentService } from "../../services/appointmentService"
 import { servicesService } from "../../services/servicesService"
+import { paymentService } from "../../services/paymentService"
+import type { Bill } from "../../types/payment"
 import dayjs from "dayjs"
 import type { Dayjs } from "dayjs"
 import { useTranslation } from "react-i18next"
@@ -133,26 +135,38 @@ const ServicePatients: React.FC = () => {
             }));
 
 
+            // Fetch appointment and bill for each order
             const appointmentPromises = enrichedOrders.map(async (order) => {
                 try {
                     const appointment = await appointmentService.getAppointmentById(order.appointmentId);
-                    return { appointmentId: order.appointmentId, data: appointment };
+                    // Fetch bill for this appointment
+                    const bill = await paymentService.getBillByAppointmentId(order.appointmentId);
+                    return { appointmentId: order.appointmentId, appointment, bill };
                 } catch (error) {
-                    console.error(`Error fetching appointment ${order.appointmentId}:`, error);
-                    return { appointmentId: order.appointmentId, data: null };
+                    console.error(`Error fetching appointment or bill for ${order.appointmentId}:`, error);
+                    return { appointmentId: order.appointmentId, appointment: null, bill: null };
                 }
             });
 
             const appointmentResults = await Promise.all(appointmentPromises);
+            // Only keep orders with PAID bill status
+            const paidAppointmentIds = new Set(
+                appointmentResults
+                    .filter(result => result.bill && result.bill.status === 'P')
+                    .map(result => result.appointmentId)
+            );
+            const filteredOrders = enrichedOrders.filter(order => paidAppointmentIds.has(order.appointmentId));
             const appointmentsMap = appointmentResults.reduce(
                 (acc, result) => {
-                    acc[result.appointmentId] = result.data;
+                    if (result.appointment) {
+                        acc[result.appointmentId] = result.appointment;
+                    }
                     return acc;
                 },
                 {} as { [key: number]: any },
             );
 
-            setServiceOrders(enrichedOrders);
+            setServiceOrders(filteredOrders);
             setAppointmentsData(appointmentsMap);
         } catch (err: any) {
             console.error("Error in fetchServiceOrders:", err.response?.data || err.message);

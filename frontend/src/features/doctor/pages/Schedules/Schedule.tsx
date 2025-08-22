@@ -163,12 +163,9 @@ function Schedule() {
         const fetchData = async () => {
             if (!doctorId) return;
             try {
-                console.log("Fetching data for doctorId:", doctorId);
-
                 try {
                     if (typeof doctorService?.getDoctorById === "function") {
                         const doctor = await doctorService.getDoctorById(doctorId);
-                        console.log("Doctor data:", doctor);
                         setDoctorData({
                             firstName: "",
                             lastName: "",
@@ -190,11 +187,10 @@ function Schedule() {
                         });
                     }
                 } catch (error) {
-                    console.log("Could not fetch doctor details:", error);
+                    console.error("Could not fetch doctor details:", error);
                 }
 
                 const schedules = await scheduleService.getSchedulesByDoctorId(doctorId);
-                console.log(t("log.schedulesFetched"), doctorId, ":", schedules);
 
                 if (schedules.length === 0) {
                     console.warn(t("log.noSchedulesFound"), doctorId);
@@ -280,7 +276,6 @@ function Schedule() {
                     })
                     .filter(Boolean);
 
-                console.log("Final events:", events);
                 setEvents(events);
 
                 if (events.length > 0) {
@@ -292,7 +287,7 @@ function Schedule() {
                         }
                     }, 100);
                 } else {
-                    console.log(t("log.noValidEvents"));
+                    console.error(t("log.noValidEvents"));
                 }
             } catch (error) {
                 console.error(t("log.errorFetchingSchedules"), error);
@@ -306,16 +301,7 @@ function Schedule() {
     };
 
     const handleEventClick = (clickInfo: EventClickArg) => {
-        console.log(t("log.eventClicked"), clickInfo.event);
-        console.log(t("log.modalStateBefore"), isOpen);
         const event = clickInfo.event;
-        console.log(t("log.eventDetails"), {
-            id: event.id,
-            title: event.title,
-            start: event.start,
-            end: event.end,
-            extendedProps: event.extendedProps,
-        });
 
         const eventData = {
             id: String(event.id || ''),
@@ -326,7 +312,6 @@ function Schedule() {
             extendedProps: event.extendedProps,
         } as DoctorScheduleEvent;
 
-        console.log(t("log.setSelectedEvent"), eventData);
         setSelectedEvent(eventData);
         openModal();
 
