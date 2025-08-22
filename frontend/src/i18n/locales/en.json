@@ -1735,7 +1735,7 @@
     "usedServices": "Used Services",
     "noServices": "No services",
     "totalServiceCost": "Total service cost",
-    "details": "Details",
+    "details": "Booking Payment Amount: ",
     "totalBookingCost": "Total booking cost",
     "insuranceCovered": "Insurance covered",
     "amountToPay": "Amount to pay",

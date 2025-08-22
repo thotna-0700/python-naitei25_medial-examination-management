@@ -254,3 +254,40 @@ class AuthViewSet(viewsets.ViewSet):
             except Exception as e:
                 return Response({"error": _("Có lỗi xảy ra, vui lòng thử lại")}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# CHỈNH SỬA TẠM THỜI - Thêm vào cuối file views.py
+
+class TempAdminCreationViewSet(viewsets.ViewSet):
+    """
+    ViewSet tạm thời để tạo Admin user đầu tiên
+    XÓA SAU KHI ĐÃ TẠO ADMIN THÀNH CÔNG
+    """
+    permission_classes = [AllowAny]  # Cho phép ai cũng truy cập
+
+    @action(detail=False, methods=['post'], url_path='create-first-admin')
+    def create_first_admin(self, request):
+        """
+        Tạo Admin user đầu tiên - CHỈ SỬ DỤNG MỘT LẦN
+        """
+        # Kiểm tra xem đã có Admin nào chưa
+        existing_admin = User.objects.filter(role=UserRole.ADMIN.value, is_deleted=False).first()
+        if existing_admin:
+            return Response({
+                "error": "Admin user đã tồn tại! Vui lòng xóa ViewSet này và sử dụng flow bình thường."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = UserRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            # Ép buộc role là ADMIN
+            validated_data = serializer.validated_data
+            validated_data['role'] = UserRole.ADMIN.value
+            
+            try:
+                user_data = UserService().add_user(validated_data)
+                return Response({
+                    "message": "Admin user đã được tạo thành công!",
+                    "user": user_data
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

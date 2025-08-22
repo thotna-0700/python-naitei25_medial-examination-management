@@ -5,6 +5,10 @@ import { useState, useEffect } from "react";
 import { paymentService } from "../../../services/paymentService";
 import Badge from '../../ui/badge/Badge';
 import { useTranslation } from "react-i18next";
+import { BillPDF } from "./BillPDF";
+import { pdf } from '@react-pdf/renderer';
+import { Patient } from "../../../types/patient";
+
 
 interface Transaction {
   transactionId: number;
@@ -18,9 +22,10 @@ interface BillModalProps extends Bill {
   isOpen: boolean;
   onClose: () => void;
   services?: ServiceOrder[];
+  patient?: Patient;  
 }
 
-export function BillModal({ isOpen, onClose, services = [], ...bill }: BillModalProps) {
+export function BillModal({ isOpen, onClose, services = [], patient, ...bill }: BillModalProps) {
   const { t } = useTranslation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,34 +33,34 @@ export function BillModal({ isOpen, onClose, services = [], ...bill }: BillModal
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-  const loadTransactions = async () => {
-    try {
-      setLoading(true);
-      const raw = await paymentService.getTransactionsByBillId(bill.billId);
-      const mapped: Transaction[] = raw.map((t: any) => ({
-        transactionId: t.id,
-        amount: Number(t.amount),
-        paymentMethod: t.payment_method === "C" ? "CASH" : "ONLINE_BANKING",
-        status:
-          t.status === "S"
-            ? "SUCCESS"
-            : t.status === "P"
-            ? "PENDING"
-            : "FAILED",
-        transactionDate: t.transaction_date,
-      }));
-      setTransactions(mapped);
-    } catch (error: any) {
-      setError(error.message || "Không thể tải danh sách giao dịch");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadTransactions = async () => {
+      try {
+        setLoading(true);
+        const raw = await paymentService.getTransactionsByBillId(bill.billId);
+        const mapped: Transaction[] = raw.map((t: any) => ({
+          transactionId: t.id,
+          amount: Number(t.amount),
+          paymentMethod: t.payment_method === "C" ? "CASH" : "ONLINE_BANKING",
+          status:
+            t.status === "S"
+              ? "SUCCESS"
+              : t.status === "P"
+                ? "PENDING"
+                : "FAILED",
+          transactionDate: t.transaction_date,
+        }));
+        setTransactions(mapped);
+      } catch (error: any) {
+        setError(error.message || "Không thể tải danh sách giao dịch");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (isOpen) {
-    loadTransactions();
-  }
-}, [isOpen, bill.billId]);
+    if (isOpen) {
+      loadTransactions();
+    }
+  }, [isOpen, bill.billId]);
 
 
   const handlePayment = async (method: 'online' | 'cash') => {
@@ -77,7 +82,10 @@ export function BillModal({ isOpen, onClose, services = [], ...bill }: BillModal
 
   if (!isOpen) return null;
 
+  const [showBillPDF, setShowBillPDF] = useState(false);
   const totalServiceCost = services.reduce((sum, svc) => sum + (svc.service?.price || 0), 0);
+  const totalAmountToPay =
+    (bill.totalCost || 0) + totalServiceCost - (bill.insuranceDiscount || 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
@@ -167,7 +175,7 @@ export function BillModal({ isOpen, onClose, services = [], ...bill }: BillModal
             <div className="flex justify-between items-center pt-2 border-t border-gray-200 font-semibold">
               <span>{t("bill.amountToPay")}</span>
               <span className="text-green-600">
-                {bill.amount?.toLocaleString('vi-VN')} {t("bill.vnd")}
+                {totalAmountToPay.toLocaleString('vi-VN')} {t("bill.vnd")}
               </span>
             </div>
           </div>
@@ -266,6 +274,21 @@ export function BillModal({ isOpen, onClose, services = [], ...bill }: BillModal
             </button>
           </div>
         ) : null}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={async () => {
+              const blob = await pdf(
+  <BillPDF bill={bill} services={services} patient={patient} />
+).toBlob();
+              const url = URL.createObjectURL(blob);
+              window.open(url, "_blank");
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Xuất hóa đơn
+          </button>
+        </div>
       </div>
     </div>
   );
