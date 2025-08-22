@@ -57,7 +57,7 @@
     "avatar": "Avatar",
     "avatarFormat": "Format: JPG, PNG, GIF",
     "avatarMaxSize": "Maximum size: 3MB",
-    "selected": "Selected:",
+    "selected": "Selected",
     "removeAvatar": "Remove avatar",
     "chooseImage": "Choose image",
     "upload": "Upload",
@@ -1081,7 +1081,9 @@
     "eventDetails": "Event Details",
     "setSelectedEvent": "Set Selected Event",
     "modalStateAfter": "Modal State After",
-    "selectedEventAfter": "Selected Event After"
+    "selectedEventAfter": "Selected Event After",
+    "schedulesFetched": "Schedules fetched successfully",
+    "noSchedulesFound": "No schedules found"
   },
   "fields": {
     "activity": "Activity",

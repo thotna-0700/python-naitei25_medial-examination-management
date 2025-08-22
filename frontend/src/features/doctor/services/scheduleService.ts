@@ -31,11 +31,9 @@ export const scheduleService = {
   async getSchedulesByDoctorId(doctorId: number): Promise<ScheduleResponse[]> {
     try {
       const response = await api.get<ScheduleResponse[]>(`/schedules/?doctor_id=${doctorId}`)
-      console.log('Raw API response:', response);
-      console.log(`Successfully fetched ${response.data.length} schedules:`, response.data)
       return response.data
     } catch (error) {
-      console.error(`❌ Error fetching schedules for doctor ${doctorId}:`, error)
+      console.error(`Error fetching schedules for doctor ${doctorId}:`, error)
       throw new Error(`Không thể tải lịch làm việc của bác sĩ`)
     }
   },
@@ -44,10 +42,9 @@ export const scheduleService = {
   async getAllSchedulesForAdmin(): Promise<ScheduleResponse[]> {
     try {
       const response = await api.get<ScheduleResponse[]>(`/doctors/schedules/admin/`)
-      console.log(`✅ Successfully fetched ${response.data.length} admin schedules:`, response.data)
       return response.data
     } catch (error) {
-      console.error(`❌ Error fetching admin schedules:`, error)
+      console.error(`Error fetching admin schedules:`, error)
       throw new Error(`Không thể tải danh sách lịch làm việc`)
     }
   },
@@ -56,10 +53,9 @@ export const scheduleService = {
   async getScheduleById(scheduleId: number): Promise<ScheduleResponse> {
     try {
       const response = await api.get<ScheduleResponse>(`/doctors/schedules/${scheduleId}/`)
-      console.log(`✅ Successfully fetched schedule:`, response.data)
       return response.data
     } catch (error) {
-      console.error(`❌ Error fetching schedule ${scheduleId}:`, error)
+      console.error(`Error fetching schedule ${scheduleId}:`, error)
       throw new Error(`Không thể tải thông tin lịch làm việc`)
     }
   },
@@ -76,11 +72,10 @@ export const scheduleService = {
         shift: scheduleData.shift,
       }
       const response = await api.post<ScheduleResponse>("/schedules/", payload)
-      console.log(`✅ Successfully created schedule:`, response.data)
       return response.data
     } catch (error: any) {
       // Thêm ': any' để truy cập thuộc tính response
-      console.error(`❌ Error creating schedule:`, error)
+      console.error(`Error creating schedule:`, error)
       if (error.response) {
         console.error("Backend error details:", error.response.data) // Dòng này sẽ hiển thị lỗi chi tiết
       }
@@ -104,10 +99,9 @@ export const scheduleService = {
       if (scheduleData.shift !== undefined) payload.shift = scheduleData.shift
 
       const response = await api.put<ScheduleResponse>(`/doctors/${doctorId}/schedules/${scheduleId}/`, payload)
-      console.log(`✅ Successfully updated schedule:`, response.data)
       return response.data
     } catch (error) {
-      console.error(`❌ Error updating schedule ${scheduleId}:`, error)
+      console.error(`Error updating schedule ${scheduleId}:`, error)
       throw new Error(`Không thể cập nhật lịch làm việc`)
     }
   },
@@ -116,9 +110,8 @@ export const scheduleService = {
   async deleteSchedule(doctorId: number, scheduleId: number): Promise<void> {
     try {
       await api.delete(`/doctors/${doctorId}/schedules/${scheduleId}/`)
-      console.log(`✅ Successfully deleted schedule ${scheduleId}`)
     } catch (error) {
-      console.error(`❌ Error deleting schedule ${scheduleId}:`, error)
+      console.error(`Error deleting schedule ${scheduleId}:`, error)
       throw new Error(`Không thể xóa lịch làm việc`)
     }
   },

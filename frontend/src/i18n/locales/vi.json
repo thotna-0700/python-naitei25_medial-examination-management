@@ -57,7 +57,7 @@
     "avatar": "Ảnh đại diện",
     "avatarFormat": "Định dạng: JPG, PNG, GIF",
     "avatarMaxSize": "Kích thước tối đa: 3MB",
-    "selected": "Đã chọn:",
+    "selected": "Đã chọn",
     "removeAvatar": "Xóa ảnh đại diện",
     "chooseImage": "Chọn hình ảnh",
     "upload": "Tải lên",
@@ -1074,7 +1074,9 @@
     "eventDetails": "Chi tiết sự kiện",
     "setSelectedEvent": "Chọn sự kiện",
     "modalStateAfter": "Trạng thái hộp thoại sau",
-    "selectedEventAfter": "Sự kiện đã chọn sau"
+    "selectedEventAfter": "Sự kiện đã chọn sau",
+    "schedulesFetched": "Lịch đã được lấy thành công",
+    "noSchedulesFound": "Không tìm thấy lịch nào"
   },
   "fields": {
     "activity": "Hoạt động",

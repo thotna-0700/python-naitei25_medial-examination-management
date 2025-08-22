@@ -1,19 +1,16 @@
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { Form, Input, Select, Button, Avatar, Space, Upload, message, Empty, Modal } from "antd"
+import { Form, Input, Select, Button, Avatar, Space, message, Empty, Modal } from "antd"
 import {
   UserOutlined,
-  UploadOutlined,
   SaveOutlined,
   EditOutlined,
   CalendarOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
 } from "@ant-design/icons"
-import type { UploadFile, UploadProps } from "antd/es/upload/interface"
-import type { RcFile } from "antd/es/upload"
 import { api } from "../../../shared/services/api"
 
 // Types
@@ -81,9 +78,7 @@ const getDoctorId = (): number | null => {
 
 const doctorService = {
   async getDoctorProfile(doctorId: number): Promise<Doctor> {
-    console.log("Fetching doctor profile for ID:", doctorId)
     const response = await api.get(`/doctors/${doctorId}`)
-    console.log("Doctor profile response:", response.data)
     const data = response.data
     // Map backend fields to frontend Doctor type
     const department = data.department
@@ -116,30 +111,20 @@ const doctorService = {
   },
 
   async updateDoctor(doctorId: number, data: Partial<Doctor>): Promise<Doctor> {
-    console.log("Updating doctor with data:", data)
     const response = await api.put(`/doctors/${doctorId}/`, data)
-    console.log("Update doctor response:", response.data)
     return response.data
   },
 
   async uploadAvatar(doctorId: number, file: File): Promise<Doctor> {
-    console.log("Uploading avatar for doctor ID:", doctorId, "File:", file)
     const formData = new FormData()
     formData.append("file", file)
 
-    // Log FormData contents
-    console.log("FormData contents:")
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value)
-    }
-
     try {
-      const response = await api.post(`/doctors/${doctorId}/avatar`, formData, {
+      const response = await api.post(`/doctors/${doctorId}/upload_avatar/`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       })
-      console.log("Upload avatar response:", response.data)
       return response.data
     } catch (error) {
       console.error("Upload avatar error:", error)
@@ -152,10 +137,8 @@ const doctorService = {
   },
 
   async deleteAvatar(doctorId: number): Promise<Doctor> {
-    console.log("Deleting avatar for doctor ID:", doctorId)
     try {
       const response = await api.delete(`/doctors/${doctorId}/avatar`)
-      console.log("Delete avatar response:", response.data)
       return response.data
     } catch (error) {
       console.error("Delete avatar error:", error)
@@ -188,7 +171,6 @@ const useUserProfile = () => {
       const doctorData = await doctorService.getDoctorProfile(doctorId)
       setProfile(doctorData)
       setOriginalProfile({ ...doctorData })
-      console.log("Profile loaded:", doctorData)
     } catch (err) {
       console.error("Error fetching profile:", err)
       setError(err instanceof Error ? err.message : "Unknown error")
@@ -202,7 +184,6 @@ const useUserProfile = () => {
   }, [])
 
   const handleChange = (field: keyof Doctor, value: any) => {
-    console.log(`Changing ${field}:`, value)
     setProfile((prev) => (prev ? { ...prev, [field]: value } : null))
   }
 
@@ -261,7 +242,6 @@ const useUserProfile = () => {
         }
       })
 
-      console.log("Saving (backend fields):", sendFields)
 
       const updatedDoctor = await doctorService.updateDoctor(doctorId, sendFields)
       setProfile(updatedDoctor)
@@ -286,13 +266,6 @@ const useUserProfile = () => {
       if (!doctorId) {
         throw new Error("Doctor ID not found")
       }
-
-      console.log("Starting avatar upload...")
-      console.log("File details:", {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      })
 
       const updatedDoctor = await doctorService.uploadAvatar(doctorId, file)
 
@@ -330,7 +303,6 @@ const useUserProfile = () => {
         throw new Error("Doctor ID not found")
       }
 
-      console.log("Starting avatar deletion...")
       const updatedDoctor = await doctorService.deleteAvatar(doctorId)
 
       setProfile(updatedDoctor)
@@ -376,7 +348,8 @@ const AccountInfo = () => {
   const [saving, setSaving] = useState(false)
   const [avatarLoading, setAvatarLoading] = useState(false)
   const [previewImage, setPreviewImage] = useState<string | undefined>(undefined)
-  const [fileList, setFileList] = useState<UploadFile[]>([])
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (profile) {
@@ -390,7 +363,7 @@ const AccountInfo = () => {
         birthday: profile.birthday ? formatDateForDisplay(profile.birthday) : "",
       }
       form.setFieldsValue(formValues)
-      setFileList([])
+      setSelectedFile(null)
       setPreviewImage(undefined)
     }
   }, [profile, form])
@@ -502,81 +475,51 @@ const AccountInfo = () => {
     }
   }
 
-  const handleAvatarChange: UploadProps["onChange"] = (info) => {
-    console.log("Avatar change event:", info)
-
-    if (!info.file) {
-      console.log("No file in info")
+  const handleAvatarInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      setSelectedFile(null)
+      setPreviewImage(undefined)
       return
     }
-
     // Validate file size
-    if (info.file.size && info.file.size > 3 * 1024 * 1024) {
+    if (file.size > 3 * 1024 * 1024) {
       message.error("Kích thước ảnh không được vượt quá 3MB!")
-      setFileList([])
+      setSelectedFile(null)
       setPreviewImage(undefined)
       return
     }
-
     // Validate file type
-    const isImage = info.file.type?.startsWith("image/")
-    if (!isImage) {
+    if (!file.type.startsWith("image/")) {
       message.error("Chỉ chấp nhận file ảnh (JPG, PNG, GIF)!")
-      setFileList([])
+      setSelectedFile(null)
       setPreviewImage(undefined)
       return
     }
-
-    console.log("File validation passed:", {
-      name: info.file.name,
-      size: info.file.size,
-      type: info.file.type,
-    })
-
-    // Set file list and preview
-    setFileList([info.file])
-
+    setSelectedFile(file)
     // Preview image
-    if (info.file.originFileObj) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        console.log("File read successfully")
-        setPreviewImage(e.target?.result as string)
-      }
-      reader.onerror = (e) => {
-        console.error("File read error:", e)
-        message.error("Không thể đọc file ảnh")
-      }
-      reader.readAsDataURL(info.file.originFileObj)
-    } else {
-      console.log("No originFileObj found")
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setPreviewImage(ev.target?.result as string)
     }
+    reader.onerror = (ev) => {
+      setPreviewImage(undefined)
+      message.error("Không thể đọc file ảnh")
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleUploadAvatar = async () => {
-    console.log("Upload avatar clicked")
-    console.log("FileList:", fileList)
-
-    if (fileList.length === 0) {
+    if (!selectedFile) {
       message.error("Vui lòng chọn ảnh để tải lên")
       return
     }
-
-    const file = fileList[0]
-    if (!file.originFileObj) {
-      message.error("File không hợp lệ")
-      return
-    }
-
     try {
       setAvatarLoading(true)
-      console.log("Starting upload process...")
-
-      const success = await uploadAvatar(file.originFileObj as RcFile)
+      const success = await uploadAvatar(selectedFile)
       if (success) {
-        setFileList([])
+        setSelectedFile(null)
         setPreviewImage(undefined)
-        console.log("Upload completed successfully")
       }
     } catch (error) {
       console.error("Upload failed:", error)
@@ -597,7 +540,7 @@ const AccountInfo = () => {
           setAvatarLoading(true)
           const success = await deleteAvatar()
           if (success) {
-            setFileList([])
+            setSelectedFile(null)
             setPreviewImage(undefined)
           }
         } catch (error) {
@@ -624,7 +567,6 @@ const AccountInfo = () => {
           <h2 className="text-xl font-semibold">{t("navigation.profile")}</h2>
           <p className="text-gray-600">{t("navigation.profilePublicInfo")}</p>
         </div>
-
         <div className="flex gap-2">
           {!editMode ? (
             <Button type="primary" icon={<EditOutlined />} onClick={handleEdit}>
@@ -640,20 +582,18 @@ const AccountInfo = () => {
           )}
         </div>
       </div>
-
       <Form form={form} layout="vertical" initialValues={profile || {}} disabled={!editMode}>
         {/* Avatar Section */}
-        <Form.Item label={t("common.avatar")}>
+        <Form.Item label={t("common.avatar")}> 
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Avatar src={currentAvatarUrl} size={96} icon={<UserOutlined />} />
               <div className="ml-5">
                 <p className="text-sm text-gray-600 mb-1">{t("common.avatarFormat")}</p>
                 <p className="text-sm text-gray-600 mb-3">{t("common.avatarMaxSize")}</p>
-                {fileList.length > 0 && <p className="text-sm text-blue-600">{t("common.selected")}: {fileList[0].name}</p>}
+                {selectedFile && <p className="text-sm text-blue-600">{t("common.selected")}: {selectedFile.name}</p>}
               </div>
             </div>
-
             {editMode && (
               <Space>
                 <Button
@@ -664,19 +604,22 @@ const AccountInfo = () => {
                 >
                   {t("common.removeAvatar")}
                 </Button>
-                <Upload
-                  showUploadList={false}
-                  beforeUpload={() => false} // Prevent auto upload
-                  onChange={handleAvatarChange}
+                <input
+                  type="file"
                   accept="image/*"
+                  style={{ display: "none" }}
+                  ref={fileInputRef}
+                  onChange={handleAvatarInputChange}
                   disabled={avatarLoading}
-                  multiple={false}
+                />
+                <Button
+                  icon={<UserOutlined />}
+                  disabled={avatarLoading}
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  <Button icon={<UploadOutlined />} disabled={avatarLoading}>
-                    {t("common.chooseImage")}
-                  </Button>
-                </Upload>
-                {fileList.length > 0 && (
+                  {t("common.chooseImage")}
+                </Button>
+                {selectedFile && (
                   <Button type="primary" onClick={handleUploadAvatar} loading={avatarLoading} disabled={avatarLoading}>
                     {t("common.upload")}
                   </Button>

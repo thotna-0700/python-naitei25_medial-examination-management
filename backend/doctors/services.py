@@ -32,7 +32,7 @@ class DoctorService:
                 raise ValueError(_("Email hoặc số điện thoại là bắt buộc"))
             user = UserService().add_user(user_data)
             doctor = Doctor.objects.create(
-                user_id=user['userId'],
+                user_id=user['id'],
                 department_id=data['department_id'],
                 identity_number=data['identity_number'],
                 first_name=data['first_name'],
