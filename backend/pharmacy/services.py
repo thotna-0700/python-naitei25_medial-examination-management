@@ -84,15 +84,9 @@ class PharmacyService:
     def delete_prescription(self, id):
         with transaction.atomic():
             prescription = self.get_prescription_by_id(id)
-
-            if prescription.prescription_details.exists():
-                raise ValueError(_("Không thể xóa đơn thuốc vì có chi tiết đơn thuốc liên kết"))
-
-            if hasattr(prescription, 'appointment') and prescription.appointment.exists():
-                raise ValueError(_("Không thể xóa đơn thuốc vì được sử dụng trong lịch sử khám bệnh."))
-
-            prescription.prescription_details.all().delete()
-            prescription.delete()
+            prescription.is_deleted = True
+            prescription.save()
+            return prescription
 
     def add_medicine_to_prescription(self, data):
         prescription = self.get_prescription_by_id(data['prescription_id'])
@@ -126,7 +120,7 @@ class PharmacyService:
         detail.delete()
 
     def get_prescriptions_by_patient_id(self, patient_id):
-        return Prescription.objects.filter(patient_id=patient_id)
+        return Prescription.objects.filter(patient_id=patient_id, is_deleted=False)
 
     def get_prescriptions_by_appointment_id(self, appointment_id):
         return Prescription.objects.filter(appointment_id=appointment_id)

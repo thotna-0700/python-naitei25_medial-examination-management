@@ -10,6 +10,9 @@ import type {
   Medicine,
 } from "../../../types/pharmacy"
 import { pharmacyService } from "../../../services/pharmacyService"
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Calendar } from "lucide-react";
 import { useTranslation } from "react-i18next"
 
 interface EditMedicalRecordModalProps {
@@ -111,19 +114,19 @@ export default function EditMedicalRecordModal({
     }
 
     if (form.systolic_blood_pressure && (form.systolic_blood_pressure < 80 || form.systolic_blood_pressure > 200)) {
-      newErrors.systolic_blood_pressure = t("medicalRecord.error.systolicRange") 
+      newErrors.systolic_blood_pressure = t("medicalRecord.error.systolicRange")
     }
 
     if (form.diastolic_blood_pressure && (form.diastolic_blood_pressure < 40 || form.diastolic_blood_pressure > 120)) {
-      newErrors.diastolic_blood_pressure = t("medicalRecord.error.diastolicRange") 
+      newErrors.diastolic_blood_pressure = t("medicalRecord.error.diastolicRange")
     }
 
     if (form.heart_rate && (form.heart_rate < 40 || form.heart_rate > 200)) {
-      newErrors.heart_rate = t("medicalRecord.error.heartRateRange") 
+      newErrors.heart_rate = t("medicalRecord.error.heartRateRange")
     }
 
     if (form.blood_sugar && (form.blood_sugar < 50 || form.blood_sugar > 500)) {
-      newErrors.blood_sugar = t("medicalRecord.error.bloodSugarRange") 
+      newErrors.blood_sugar = t("medicalRecord.error.bloodSugarRange")
     }
 
     setErrors(newErrors)
@@ -151,18 +154,19 @@ export default function EditMedicalRecordModal({
       return
     }
 
-    // Debug: Log form data before submitting
     console.log("Form data being submitted:", form)
-    console.log("Prescription details:", form.prescription_details) // CHANGED: from prescriptionDetails
+    console.log("Prescription details:", form.prescription_details)
     form.prescription_details?.forEach((detail, index) => {
-      // CHANGED: from prescriptionDetails
       console.log(`Detail ${index}:`, detail)
       console.log(`Quantity for detail ${index}:`, detail.quantity, typeof detail.quantity)
     })
 
     try {
       setLoading(true)
-      await onSubmit(prescription.id, form) // Sử dụng prescription.id
+      await onSubmit(prescription.id, {
+        ...form,
+        follow_up_date: form.follow_up_date?.trim() ? form.follow_up_date : null,
+      })
       onClose()
     } catch (error) {
       console.error("Error updating medical record:", error)
@@ -253,12 +257,12 @@ export default function EditMedicalRecordModal({
       return reindexed
     })
 
-  setForm((prev) => ({
-    ...prev,
-    prescription_details: prev.prescription_details?.map((detail, i) =>
-      i === index ? { ...detail, status: "cancel" } : detail
-    ) || [],
-  }))
+    setForm((prev) => ({
+      ...prev,
+      prescription_details: prev.prescription_details?.map((detail, i) =>
+        i === index ? { ...detail, status: "cancel" } : detail
+      ) || [],
+    }))
   }
 
   // Helper functions for frequency
@@ -385,8 +389,8 @@ export default function EditMedicalRecordModal({
                 </label>
                 <input
                   type="number"
-                  name="heart_rate" 
-                  value={form.heart_rate || 70} 
+                  name="heart_rate"
+                  value={form.heart_rate || 70}
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                   min={40}
@@ -403,8 +407,8 @@ export default function EditMedicalRecordModal({
                 </label>
                 <input
                   type="number"
-                  name="blood_sugar" 
-                  value={form.blood_sugar || 90} 
+                  name="blood_sugar"
+                  value={form.blood_sugar || 90}
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                   min={50}
@@ -420,175 +424,189 @@ export default function EditMedicalRecordModal({
             <div className="flex items-center">
               <input
                 type="checkbox"
-                name="is_follow_up" 
-                checked={form.is_follow_up || false} 
+                name="is_follow_up"
+                checked={form.is_follow_up || false}
                 onChange={handleChange}
                 className="h-4 w-4 text-base-600 focus:ring-base-500 border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-900">{t("medicalRecord.needFollowUp")}</label>
             </div>
 
-            {form.is_follow_up && ( 
+            {form.is_follow_up && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.followUpDate")}</label>
-                <input
-                  type="date"
-                  name="follow_up_date" 
-                  value={form.follow_up_date || ""} 
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t("medicalRecord.followUpDate")}
+                </label>
+                <div className="relative w-full">
+                  <DatePicker
+                    selected={form.follow_up_date ? new Date(form.follow_up_date) : null}
+                    onChange={(date: Date | null) =>
+                      setForm({
+                        ...form,
+                        follow_up_date: date ? date.toISOString().split("T")[0] : "",
+                      })
+                    }
+                    dateFormat="yyyy-MM-dd"
+                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg 
+                    focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-0"
+                    placeholderText={t("medicalRecord.selectDate") ?? "Chọn ngày"}
+                    wrapperClassName="w-full"
+                  />
+                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 
+                            text-gray-400 w-5 h-5 pointer-events-none" />
+                </div>
               </div>
             )}
 
-{/* Prescription Details Section */}
-<div>
-  <div className="flex justify-between items-center mb-2">
-    <label className="block text-sm font-medium text-gray-700">{t("medicalRecord.prescriptionDetails")}</label>
-    <button
-      type="button"
-      onClick={addPrescriptionDetail}
-      className="px-3 py-2 text-sm font-medium text-white bg-rose-800 rounded-lg hover:bg-rose-900"
-    >
-      + {t("medicalRecord.addMedicine")}
-    </button>
-  </div>
 
-  {form.prescription_details && form.prescription_details.length > 0 ? (
-    form.prescription_details
-      .filter((detail) => detail.status !== "cancel") // ẩn chi tiết bị xóa mềm
-      .map((detail, index) => (
-        <div key={index} className="p-4 mb-4 bg-gray-50 rounded-lg border">
-          <div className="flex justify-between items-start mb-3">
-            <h6 className="font-medium text-gray-700">{t("medicalRecord.medicine")} {index + 1}</h6>
-            <button
-              type="button"
-              onClick={() => softDeletePrescriptionDetail(index)}
-              className="text-red-500 hover:text-red-700 text-sm"
-            >
-              {t("common.delete")}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Thuốc */}
+            {/* Prescription Details Section */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.medicine")}</label>
-              <select
-                value={detail.medicine_id}
-                onChange={(e) =>
-                  updatePrescriptionDetail(index, "medicine_id", Number(e.target.value))
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                title="Chọn thuốc từ danh sách"
-              >
-                <option value={0}>{t("medicalRecord.selectMedicine")}</option>
-                {medicines.map((med) => (
-                  <option key={med.medicineId} value={med.medicineId}>
-                    {med.medicineName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Liều lượng */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.dosage")}</label>
-              <input
-                type="text"
-                value={detail.dosage}
-                onChange={(e) => updatePrescriptionDetail(index, "dosage", e.target.value)}
-                placeholder="VD: 500mg"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                title="Nhập liều lượng thuốc"
-              />
-            </div>
-
-            {/* Số lần */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.frequencyTimes")}</label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={getFrequencyTimes(index)}
-                  onChange={(e) => updateFrequencyTimes(index, e.target.value)}
-                  placeholder="2"
-                  className="w-20 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                  min="1"
-                  title="Nhập số lần dùng"
-                />
-                <select
-                  value={getFrequencyUnit(index)}
-                  onChange={(e) => updateFrequencyUnit(index, e.target.value)}
-                  className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                  title="Chọn đơn vị thời gian"
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700">{t("medicalRecord.prescriptionDetails")}</label>
+                <button
+                  type="button"
+                  onClick={addPrescriptionDetail}
+                  className="px-3 py-2 text-sm font-medium text-white bg-rose-800 rounded-lg hover:bg-rose-900"
                 >
-                  <option value="ngày">{t("medicalRecord.units.day")}</option>
-                  <option value="tuần">{t("medicalRecord.units.week")}</option>
-                  <option value="tháng">{t("medicalRecord.units.month")}</option>
-                </select>
+                  + {t("medicalRecord.addMedicine")}
+                </button>
               </div>
-            </div>
 
-            {/* Thời gian */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.duration")}</label>
-              <input
-                type="text"
-                value={detail.duration}
-                onChange={(e) => updatePrescriptionDetail(index, "duration", e.target.value)}
-                placeholder="VD: 7 ngày"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                title="Nhập thời gian dùng thuốc"
-              />
-            </div>
+              {form.prescription_details && form.prescription_details.length > 0 ? (
+                form.prescription_details
+                  .filter((detail) => detail.status !== "cancel") // ẩn chi tiết bị xóa mềm
+                  .map((detail, index) => (
+                    <div key={index} className="p-4 mb-4 bg-gray-50 rounded-lg border">
+                      <div className="flex justify-between items-start mb-3">
+                        <h6 className="font-medium text-gray-700">{t("medicalRecord.medicine")} {index + 1}</h6>
+                        <button
+                          type="button"
+                          onClick={() => softDeletePrescriptionDetail(index)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          {t("common.delete")}
+                        </button>
+                      </div>
 
-            {/* Số lượng */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t("medicalRecord.quantity")} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                value={detail.quantity || 1}
-                onChange={(e) => {
-                  const inputValue = e.target.value
-                  const quantity =
-                    inputValue === ""
-                      ? 1
-                      : Math.max(1, Number.parseInt(inputValue, 10) || 1)
-                  updatePrescriptionDetail(index, "quantity", quantity)
-                }}
-                min="1"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                title="Nhập số lượng thuốc"
-                placeholder="1"
-                required
-              />
-            </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Thuốc */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.medicine")}</label>
+                          <select
+                            value={detail.medicine_id}
+                            onChange={(e) =>
+                              updatePrescriptionDetail(index, "medicine_id", Number(e.target.value))
+                            }
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            title="Chọn thuốc từ danh sách"
+                          >
+                            <option value={0}>{t("medicalRecord.selectMedicine")}</option>
+                            {medicines.map((med) => (
+                              <option key={med.medicineId} value={med.medicineId}>
+                                {med.medicineName}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-            {/* Ghi chú */}
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.notes")}</label>
-              <textarea
-                value={detail.prescription_notes || ""}
-                onChange={(e) =>
-                  updatePrescriptionDetail(index, "prescription_notes", e.target.value)
-                }
-                placeholder={t("medicalRecord.notesPlaceholder")}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0 min-h-[80px] resize-none"
-                title="Nhập ghi chú về cách dùng"
-              />
+                        {/* Liều lượng */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.dosage")}</label>
+                          <input
+                            type="text"
+                            value={detail.dosage}
+                            onChange={(e) => updatePrescriptionDetail(index, "dosage", e.target.value)}
+                            placeholder="VD: 500mg"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            title="Nhập liều lượng thuốc"
+                          />
+                        </div>
+
+                        {/* Số lần */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.frequencyTimes")}</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="number"
+                              value={getFrequencyTimes(index)}
+                              onChange={(e) => updateFrequencyTimes(index, e.target.value)}
+                              placeholder="2"
+                              className="w-20 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                              min="1"
+                              title="Nhập số lần dùng"
+                            />
+                            <select
+                              value={getFrequencyUnit(index)}
+                              onChange={(e) => updateFrequencyUnit(index, e.target.value)}
+                              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                              title="Chọn đơn vị thời gian"
+                            >
+                              <option value="ngày">{t("medicalRecord.units.day")}</option>
+                              <option value="tuần">{t("medicalRecord.units.week")}</option>
+                              <option value="tháng">{t("medicalRecord.units.month")}</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Thời gian */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.duration")}</label>
+                          <input
+                            type="text"
+                            value={detail.duration}
+                            onChange={(e) => updatePrescriptionDetail(index, "duration", e.target.value)}
+                            placeholder="VD: 7 ngày"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            title="Nhập thời gian dùng thuốc"
+                          />
+                        </div>
+
+                        {/* Số lượng */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {t("medicalRecord.quantity")} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={detail.quantity || 1}
+                            onChange={(e) => {
+                              const inputValue = e.target.value
+                              const quantity =
+                                inputValue === ""
+                                  ? 1
+                                  : Math.max(1, Number.parseInt(inputValue, 10) || 1)
+                              updatePrescriptionDetail(index, "quantity", quantity)
+                            }}
+                            min="1"
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
+                            title="Nhập số lượng thuốc"
+                            placeholder="1"
+                            required
+                          />
+                        </div>
+
+                        {/* Ghi chú */}
+                        <div className="col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.notes")}</label>
+                          <textarea
+                            value={detail.prescription_notes || ""}
+                            onChange={(e) =>
+                              updatePrescriptionDetail(index, "prescription_notes", e.target.value)
+                            }
+                            placeholder={t("medicalRecord.notesPlaceholder")}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0 min-h-[80px] resize-none"
+                            title="Nhập ghi chú về cách dùng"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              ) : (
+                <p className="text-gray-500 text-center py-4 bg-gray-50 rounded-lg border">
+                  {t("medicalRecord.noMedicinesInPrescription")}
+                </p>
+              )}
             </div>
-          </div>
-        </div>
-      ))
-  ) : (
-    <p className="text-gray-500 text-center py-4 bg-gray-50 rounded-lg border">
-      {t("medicalRecord.noMedicinesInPrescription")}
-    </p>
-  )}
-</div>
 
           </form>
         </div>

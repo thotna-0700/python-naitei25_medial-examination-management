@@ -1994,6 +1994,7 @@
           "phone": "Enter phone number",
           "email": "Enter email address",
           "address": "Enter address",
+          "birthday": "Select date of birth",
           "identityNumber": "Enter identity number",
           "insuranceNumber": "Enter health insurance number",
           "avatar": "Enter avatar URL (https://...)"

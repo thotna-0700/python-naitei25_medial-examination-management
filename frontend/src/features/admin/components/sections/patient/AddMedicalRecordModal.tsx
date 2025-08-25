@@ -8,6 +8,9 @@ import type { CreatePrescriptionRequest, PrescriptionDetailRequest, Medicine } f
 import { pharmacyService } from "../../../services/pharmacyService"
 import { appointmentService } from "../../../services/appointmentService"
 import type { AppointmentResponse } from "../../../types/appointment"
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Calendar } from "lucide-react";
 import { useTranslation } from "react-i18next"
 
 
@@ -186,7 +189,10 @@ export default function AddMedicalRecordModal({
     try {
       setLoading(true)
 
-      await Promise.resolve(onSubmit(form.appointment_id, cleanedForm))
+      await Promise.resolve(onSubmit(form.appointment_id, {
+        ...cleanedForm,
+        follow_up_date: cleanedForm.follow_up_date?.trim() ? cleanedForm.follow_up_date : null,
+      }))
 
       setForm({
         appointment_id: appointmentId || 0,
@@ -450,13 +456,23 @@ export default function AddMedicalRecordModal({
 
             {form.is_follow_up && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t("medicalRecord.followUpDate")}</label>
-                <input
-                  type="date"
-                  value={form.follow_up_date || ""}
-                  onChange={(e) => setForm({ ...form, follow_up_date: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-0"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t("medicalRecord.followUpDate")}
+                </label>
+                <div className="relative w-full">
+                  <DatePicker
+                    selected={form.follow_up_date ? new Date(form.follow_up_date) : null}
+                    onChange={(date: Date | null) =>
+                      setForm({ ...form, follow_up_date: date ? date.toISOString().split("T")[0] : "" })
+                    }
+                    dateFormat="yyyy-MM-dd"
+                    className="w-full p-3 pr-10 border border-gray-300 rounded-lg 
+                    focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-0"
+                    placeholderText="Chọn ngày"
+                    wrapperClassName="w-full"
+                  />
+                  <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none" />
+                </div>
               </div>
             )}
 
@@ -489,8 +505,8 @@ export default function AddMedicalRecordModal({
                             medicines.map((med) => {
                               console.log("Rendering medicine option:", med)
                               return (
-                                <option key={med.medicine_id || med.id} value={med.medicine_id || med.id}>
-                                  {med.medicineName || med.medicine_name || med.name || "Tên thuốc không xác định"}
+                                <option key={med.medicineId} value={med.medicineId}>
+                                  {med.medicineName || "Tên thuốc không xác định"}
                                 </option>
                               )
                             })
