@@ -55,7 +55,7 @@ class Prescription(BaseModel):
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Prescription {self.prescription_id} for Patient {self.patient_id}"
+        return f"Prescription {self.id} for Patient {self.patient_id}"
 
 
 class PrescriptionDetail(BaseModel):
@@ -68,4 +68,4 @@ class PrescriptionDetail(BaseModel):
     prescription_notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Detail {self.detail_id} for {self.medicine.medicine_name}"
+        return f"Detail {self.id} for {self.medicine.medicine_name}"
