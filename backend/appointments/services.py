@@ -170,7 +170,7 @@ class AppointmentService:
     ):
         qs = Appointment.objects.filter(
             doctor_id=doctor_id, schedule_id__in=schedule_ids
-        )
+        ).order_by("id")
         paginator = Paginator(qs, page_size)
         return paginator.get_page(page_no)
 
