@@ -79,21 +79,25 @@ export default function PatientAddForm() {
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        identityNumber: formData.identity_number,
-        insuranceNumber: formData.insurance_number,
+        identity_number: formData.identity_number,
+        insurance_number: formData.insurance_number,
         first_name: formData.first_name,
         last_name: formData.last_name,
         birthday,
         avatar: formData.avatar,
-        gender: formData.gender as "MALE" | "FEMALE" | "OTHER",
+        gender: formData.gender as "M" | "F" | "O",
         address: formData.address,
         allergies: formData.allergies,
         height: formData.height,
         weight: formData.weight,
         bloodType: formData.blood_type,
-        emergencyContactDtos: emergencyContacts.filter(contact => 
-          contact.contactName.trim() && contact.contactPhone.trim()
-        )
+        emergencyContactDtos: emergencyContacts
+          .filter(contact => contact.contactName.trim() && contact.contactPhone.trim())
+          .map(contact => ({
+            contact_name: contact.contactName,
+            contact_phone: contact.contactPhone,
+            relationship: contact.relationship
+          }))
       };
       console.log("📤 Data being sent to API:", dataToSend);
       await patientService.createPatient(dataToSend);
@@ -278,9 +282,9 @@ export default function PatientAddForm() {
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500 appearance-none"
                 >
-                  <option value="OTHER">{t("common.gender.other")}</option>
-                  <option value="MALE">{t("common.gender.male")}</option>
-                  <option value="FEMALE">{t("common.gender.female")}</option>
+                  <option value="O">{t("common.gender.other")}</option>
+                  <option value="M">{t("common.gender.male")}</option>
+                  <option value="F">{t("common.gender.female")}</option>
                 </select>
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"

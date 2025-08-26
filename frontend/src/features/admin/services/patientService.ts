@@ -1,6 +1,6 @@
 import { api } from "../../../shared/services/api";
 import i18n from "../../../i18n";
-import { handleApiError } from "../../../shared/utils/errorHandler"
+import { handleApiError } from "../../../shared/utils/errorHandler";
 import type {
   Patient,
   RawPatientFromAPI,
@@ -99,30 +99,45 @@ const mapPatientToBackend = (patientData: any): any => {
   if (patientData.insuranceNumber !== undefined) {
     backendData.insurance_number = patientData.insuranceNumber;
   }
+  // Handle snake_case fields directly (for backward compatibility)
+  if (patientData.identity_number !== undefined) {
+    backendData.identity_number = patientData.identity_number;
+  }
+  if (patientData.insurance_number !== undefined) {
+    backendData.insurance_number = patientData.insurance_number;
+  }
   if (patientData.bloodType !== undefined) {
     backendData.blood_type = patientData.bloodType;
   }
 
   // Các field giữ nguyên
-  if (patientData.address !== undefined) backendData.address = patientData.address;
-  if (patientData.allergies !== undefined) backendData.allergies = patientData.allergies;
+  if (patientData.address !== undefined)
+    backendData.address = patientData.address;
+  if (patientData.allergies !== undefined)
+    backendData.allergies = patientData.allergies;
   if (patientData.avatar !== undefined) backendData.avatar = patientData.avatar;
-  if (patientData.birthday !== undefined) backendData.birthday = patientData.birthday;
+  if (patientData.birthday !== undefined)
+    backendData.birthday = patientData.birthday;
   if (patientData.phone !== undefined) backendData.phone = patientData.phone;
   if (patientData.email !== undefined) backendData.email = patientData.email;
   if (patientData.height !== undefined) backendData.height = patientData.height;
   if (patientData.weight !== undefined) backendData.weight = patientData.weight;
-  if (patientData.password !== undefined) backendData.password = patientData.password;
-  if (patientData.first_name !== undefined) backendData.first_name = patientData.first_name;
-  if (patientData.last_name !== undefined) backendData.last_name = patientData.last_name;
+  if (patientData.password !== undefined)
+    backendData.password = patientData.password;
+  if (patientData.first_name !== undefined)
+    backendData.first_name = patientData.first_name;
+  if (patientData.last_name !== undefined)
+    backendData.last_name = patientData.last_name;
 
   // Map emergency contacts
   if (patientData.emergencyContactDtos) {
-    backendData.emergency_contacts = patientData.emergencyContactDtos.map((contact: any) => ({
-      contact_name: contact.contactName,
-      contact_phone: contact.contactPhone,
-      relationship: contact.relationship,
-    }));
+    backendData.emergencyContactDtos = patientData.emergencyContactDtos.map(
+      (contact: any) => ({
+        contact_name: contact.contact_name || contact.contactName,
+        contact_phone: contact.contact_phone || contact.contactPhone,
+        relationship: contact.relationship,
+      })
+    );
   }
 
   return backendData;
@@ -156,10 +171,10 @@ export const patientService = {
   /** Create a new patient */
   async createPatient(patientData: CreatePatientRequest): Promise<Patient> {
     try {
-      const backendData = mapPatientToBackend(patientData);
+      // Send data directly without mapping
       const { data } = await api.post<RawPatientFromAPI>(
         "/patients/",
-        backendData
+        patientData
       );
       return mapRawPatientToFrontend(data);
     } catch (error: any) {
@@ -226,49 +241,49 @@ export const patientService = {
   },
 
   /** Add an emergency contact */
-async addEmergencyContact(
-  patientId: number,
-  contactData: EmergencyContactDto
-): Promise<EmergencyContact> {
-  const payload = {
-    contact_name: contactData.contactName,
-    contact_phone: contactData.contactPhone,
-    relationship: contactData.relationship,
-  };
-  const { data } = await api.post<EmergencyContact>(
-    `/patients/${patientId}/contacts/`,
-    payload
-  );
-  return data;
-},
-
-  /** Update emergency contact */
-/** Update emergency contact */
-async updateEmergencyContact(
-  patientId: number,
-  contactId: number,
-  contactData: EmergencyContactDto
-): Promise<EmergencyContact> {
-  try {
+  async addEmergencyContact(
+    patientId: number,
+    contactData: EmergencyContactDto
+  ): Promise<EmergencyContact> {
     const payload = {
       contact_name: contactData.contactName,
       contact_phone: contactData.contactPhone,
       relationship: contactData.relationship,
     };
-
-    const { data } = await api.patch<EmergencyContact>(
-      `/patients/${patientId}/contacts/${contactId}/`,
+    const { data } = await api.post<EmergencyContact>(
+      `/patients/${patientId}/contacts/`,
       payload
     );
     return data;
-  } catch (error: any) {
-    console.error(
-      `Error updating emergency contact ${contactId} for patient ${patientId}:`,
-      error
-    );
-    throw new Error("Không thể cập nhật liên hệ khẩn cấp");
-  }
-},
+  },
+
+  /** Update emergency contact */
+  /** Update emergency contact */
+  async updateEmergencyContact(
+    patientId: number,
+    contactId: number,
+    contactData: EmergencyContactDto
+  ): Promise<EmergencyContact> {
+    try {
+      const payload = {
+        contact_name: contactData.contactName,
+        contact_phone: contactData.contactPhone,
+        relationship: contactData.relationship,
+      };
+
+      const { data } = await api.patch<EmergencyContact>(
+        `/patients/${patientId}/contacts/${contactId}/`,
+        payload
+      );
+      return data;
+    } catch (error: any) {
+      console.error(
+        `Error updating emergency contact ${contactId} for patient ${patientId}:`,
+        error
+      );
+      throw new Error("Không thể cập nhật liên hệ khẩn cấp");
+    }
+  },
 
   /** Delete an emergency contact */
   async deleteEmergencyContact(

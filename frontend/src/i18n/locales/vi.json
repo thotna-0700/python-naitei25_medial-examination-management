@@ -2488,7 +2488,10 @@
         "invalidEmail": "Email không hợp lệ",
         "invalidIdentityNumber": "Số CMND/CCCD không hợp lệ",
         "invalidBirthday": "Ngày sinh không hợp lệ",
-        "invalidConsultationFee": "Phí khám bệnh không hợp lệ"
+        "invalidConsultationFee": "Phí khám bệnh không hợp lệ",
+        "phoneInvalid": "Số điện thoại không hợp lệ",
+        "emailInvalid": "Email không hợp lệ",
+        "identityInvalid": "Số CMND/CCCD không hợp lệ"
       },
       "fieldNames": {
         "phone": "Số điện thoại",
@@ -2627,6 +2630,67 @@
         "saveButton": "Lưu",
         "savingButton": "Đang lưu..."
       }
+    },
+    "filters": {
+      "title": "Danh sách bác sĩ",
+      "count": "bác sĩ",
+      "search": {
+        "label": "Tìm kiếm",
+        "placeholder": "Nhập từ khóa tìm kiếm...",
+        "fieldLabel": "Tìm trong",
+        "allFields": "Tất cả trường",
+        "name": "Họ tên",
+        "specialization": "Chuyên khoa",
+        "identity": "CCCD",
+        "department": "Khoa"
+      },
+      "gender": {
+        "label": "Giới tính",
+        "all": "Tất cả",
+        "male": "Nam",
+        "female": "Nữ",
+        "other": "Khác"
+      },
+      "degree": {
+        "label": "Học vị",
+        "all": "Tất cả"
+      },
+      "type": {
+        "label": "Loại",
+        "all": "Tất cả",
+        "examination": "Khám bệnh",
+        "service": "Dịch vụ"
+      },
+      "department": {
+        "label": "Khoa",
+        "all": "Tất cả khoa"
+      },
+      "sort": {
+        "label": "Sắp xếp theo",
+        "name": "Họ tên",
+        "degree": "Học vị",
+        "specialization": "Chuyên khoa",
+        "department": "Khoa",
+        "createdAt": "Ngày tạo",
+        "ascending": "↑ Tăng dần",
+        "descending": "↓ Giảm dần"
+      },
+      "actions": {
+        "clearFilters": "Xóa bộ lọc"
+      },
+      "results": {
+        "showing": "Hiển thị {{filtered}} / {{total}} bác sĩ",
+        "searchTag": "Tìm kiếm: \"{{term}}\"",
+        "genderTag": "Giới tính: {{gender}}",
+        "degreeTag": "Học vị: {{degree}}",
+        "typeTag": "Loại: {{type}}",
+        "departmentTag": "Khoa: {{department}}",
+        "doctorId": "Mã số: {{id}}"
+      }
+    },
+    "actions": {
+      "viewSchedule": "Xem lịch làm việc",
+      "viewDetails": "Xem chi tiết bác sĩ"
     }
   },
   "doctorSchedule": {

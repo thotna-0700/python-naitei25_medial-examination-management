@@ -3,11 +3,13 @@ import DoctorCard from "./DoctorCard";
 import SearchInput from "../../common/SearchInput";
 import { Pagination } from "../../ui/Pagination";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { doctorService } from "../../../services/doctorService";
 import type { Doctor } from "../../../types/doctor";
 const PAGE_SIZE = 5;
 
 const DoctorTable: React.FC = () => {
+  const { t } = useTranslation();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -139,10 +141,10 @@ const DoctorTable: React.FC = () => {
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex justify-start items-center pt-5">
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Danh sách bác sĩ
+            {t("doctors.filters.title")}
           </h2>
           <span className="ml-5 text-sm bg-base-600/20 text-base-600 py-1 px-4 rounded-full font-bold">
-            {totalItems} bác sĩ
+            {totalItems} {t("doctors.filters.count")}
           </span>
         </div>
       </div>
@@ -153,10 +155,10 @@ const DoctorTable: React.FC = () => {
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[300px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tìm kiếm
+              {t("doctors.filters.search.label")}
             </label>
             <SearchInput
-              placeholder="Nhập từ khóa tìm kiếm..."
+              placeholder={t("doctors.filters.search.placeholder")}
               value={searchTerm}
               onChange={handleSearch}
             />
@@ -164,18 +166,18 @@ const DoctorTable: React.FC = () => {
           
           <div className="min-w-[150px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tìm trong
+              {t("doctors.filters.search.fieldLabel")}
             </label>
             <select
               value={searchField}
               onChange={(e) => setSearchField(e.target.value as typeof searchField)}
               className="w-full h-11 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">Tất cả trường</option>
-              <option value="name">Họ tên</option>
-              <option value="specialization">Chuyên khoa</option>
-              <option value="identity">CCCD</option>
-              <option value="department">Khoa</option>
+              <option value="all">{t("doctors.filters.search.allFields")}</option>
+              <option value="name">{t("doctors.filters.search.name")}</option>
+              <option value="specialization">{t("doctors.filters.search.specialization")}</option>
+              <option value="identity">{t("doctors.filters.search.identity")}</option>
+              <option value="department">{t("doctors.filters.search.department")}</option>
             </select>
           </div>
         </div>
@@ -185,31 +187,31 @@ const DoctorTable: React.FC = () => {
           {/* Gender Filter */}
           <div className="min-w-[120px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Giới tính
+              {t("doctors.filters.gender.label")}
             </label>
             <select
               value={genderFilter}
               onChange={(e) => setGenderFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Tất cả</option>
-              <option value="MALE">Nam</option>
-              <option value="FEMALE">Nữ</option>
-              <option value="OTHER">Khác</option>
+              <option value="">{t("doctors.filters.gender.all")}</option>
+              <option value="MALE">{t("doctors.filters.gender.male")}</option>
+              <option value="FEMALE">{t("doctors.filters.gender.female")}</option>
+              <option value="OTHER">{t("doctors.filters.gender.other")}</option>
             </select>
           </div>
           
           {/* Academic Degree Filter */}
           <div className="min-w-[140px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Học vị
+              {t("doctors.filters.degree.label")}
             </label>
             <select
               value={degreeFilter}
               onChange={(e) => setDegreeFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Tất cả</option>
+              <option value="">{t("doctors.filters.degree.all")}</option>
               <option value="BS">BS</option>
               <option value="BS_CKI">BS CKI</option>
               <option value="BS_CKII">BS CKII</option>
@@ -223,30 +225,30 @@ const DoctorTable: React.FC = () => {
           {/* Type Filter */}
           <div className="min-w-[120px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Loại
+              {t("doctors.filters.type.label")}
             </label>
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Tất cả</option>
-              <option value="EXAMINATION">Khám bệnh</option>
-              <option value="SERVICE">Dịch vụ</option>
+              <option value="">{t("doctors.filters.type.all")}</option>
+              <option value="EXAMINATION">{t("doctors.filters.type.examination")}</option>
+              <option value="SERVICE">{t("doctors.filters.type.service")}</option>
             </select>
           </div>
           
           {/* Department Filter */}
           <div className="min-w-[140px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Khoa
+              {t("doctors.filters.department.label")}
             </label>
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Tất cả khoa</option>
+              <option value="">{t("doctors.filters.department.all")}</option>
               {[...new Set(doctors.map(d => d.departmentName))].map(dept => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
@@ -256,18 +258,18 @@ const DoctorTable: React.FC = () => {
           {/* Sort By */}
           <div className="min-w-[140px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sắp xếp theo
+              {t("doctors.filters.sort.label")}
             </label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="name">Họ tên</option>
-              <option value="degree">Học vị</option>
-              <option value="specialization">Chuyên khoa</option>
-              <option value="department">Khoa</option>
-              <option value="createdAt">Ngày tạo</option>
+              <option value="name">{t("doctors.filters.sort.name")}</option>
+              <option value="degree">{t("doctors.filters.sort.degree")}</option>
+              <option value="specialization">{t("doctors.filters.sort.specialization")}</option>
+              <option value="department">{t("doctors.filters.sort.department")}</option>
+              <option value="createdAt">{t("doctors.filters.sort.createdAt")}</option>
             </select>
           </div>
           
@@ -281,7 +283,7 @@ const DoctorTable: React.FC = () => {
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              ↑ Tăng dần
+              {t("doctors.filters.sort.ascending")}
             </button>
             <button
               onClick={() => setSortOrder("desc")}
@@ -291,7 +293,7 @@ const DoctorTable: React.FC = () => {
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              ↓ Giảm dần
+              {t("doctors.filters.sort.descending")}
             </button>
           </div>
           
@@ -309,37 +311,43 @@ const DoctorTable: React.FC = () => {
             }}
             className="px-3 py-2 text-sm text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
-            Xóa bộ lọc
+            {t("doctors.filters.actions.clearFilters")}
           </button>
         </div>
         
         {/* Results Summary */}
         {(searchTerm || genderFilter || degreeFilter || typeFilter || departmentFilter) && (
           <div className="text-sm text-gray-600">
-            Hiển thị {filteredDoctors.length} / {doctors.length} bác sĩ
+            {t("doctors.filters.results.showing", { filtered: filteredDoctors.length, total: doctors.length })}
             {searchTerm && (
               <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                Tìm kiếm: "{searchTerm}"
+                {t("doctors.filters.results.searchTag", { term: searchTerm })}
               </span>
             )}
             {genderFilter && (
               <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                Giới tính: {genderFilter === "MALE" ? "Nam" : genderFilter === "FEMALE" ? "Nữ" : "Khác"}
+                {t("doctors.filters.results.genderTag", { 
+                  gender: genderFilter === "MALE" ? t("doctors.filters.gender.male") : 
+                          genderFilter === "FEMALE" ? t("doctors.filters.gender.female") : 
+                          t("doctors.filters.gender.other")
+                })}
               </span>
             )}
             {degreeFilter && (
               <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
-                Học vị: {degreeFilter}
+                {t("doctors.filters.results.degreeTag", { degree: degreeFilter })}
               </span>
             )}
             {typeFilter && (
               <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
-                Loại: {typeFilter === "EXAMINATION" ? "Khám bệnh" : "Dịch vụ"}
+                {t("doctors.filters.results.typeTag", { 
+                  type: typeFilter === "EXAMINATION" ? t("doctors.filters.type.examination") : t("doctors.filters.type.service")
+                })}
               </span>
             )}
             {departmentFilter && (
               <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">
-                Khoa: {departmentFilter}
+                {t("doctors.filters.results.departmentTag", { department: departmentFilter })}
               </span>
             )}
           </div>
@@ -351,12 +359,12 @@ const DoctorTable: React.FC = () => {
           <div className="text-center py-10">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-base-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">
-              Đang tải danh sách bác sĩ...
+              {t("common.loading")}
             </p>
           </div>
         ) : paginatedData.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
-            Không tìm thấy bác sĩ phù hợp.
+            {t("common.noResults")}
           </div>
         ) : (
           paginatedData.map((doctor) => (

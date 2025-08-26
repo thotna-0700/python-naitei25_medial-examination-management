@@ -44,9 +44,9 @@ class PatientService:
                 print(f"Creating emergency contact: {contact_data}")
                 EmergencyContact.objects.create(
                     patient=patient,
-                    contact_name=contact_data['contact_name'],
-                    contact_phone=contact_data['contact_phone'],
-                    relationship=contact_data['relationship']
+                    contact_name=contact_data.get('contactName') or contact_data.get('contact_name'),
+                    contact_phone=contact_data.get('contactPhone') or contact_data.get('contact_phone'),
+                    relationship=contact_data.get('relationship')
                 )
 
         return patient

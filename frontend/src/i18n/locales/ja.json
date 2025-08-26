@@ -2480,7 +2480,10 @@
         "invalidEmail": "無効なメール",
         "invalidIdentityNumber": "無効な身分証明書番号",
         "invalidBirthday": "無効な生年月日",
-        "invalidConsultationFee": "無効な診察料"
+        "invalidConsultationFee": "無効な診察料",
+        "phoneInvalid": "無効な電話番号",
+        "emailInvalid": "無効なメールアドレス",
+        "identityInvalid": "無効な身分証明書番号"
       },
       "fieldNames": {
         "phone": "電話番号",
@@ -2619,6 +2622,67 @@
         "saveButton": "保存",
         "savingButton": "保存中..."
       }
+    },
+    "filters": {
+      "title": "医師一覧",
+      "count": "名の医師",
+      "search": {
+        "label": "検索",
+        "placeholder": "検索キーワードを入力...",
+        "fieldLabel": "検索対象",
+        "allFields": "すべてのフィールド",
+        "name": "氏名",
+        "specialization": "専門科",
+        "identity": "身分証明書",
+        "department": "診療科"
+      },
+      "gender": {
+        "label": "性別",
+        "all": "すべて",
+        "male": "男性",
+        "female": "女性",
+        "other": "その他"
+      },
+      "degree": {
+        "label": "学位",
+        "all": "すべて"
+      },
+      "type": {
+        "label": "タイプ",
+        "all": "すべて",
+        "examination": "診察",
+        "service": "サービス"
+      },
+      "department": {
+        "label": "診療科",
+        "all": "すべての診療科"
+      },
+      "sort": {
+        "label": "並び替え",
+        "name": "氏名",
+        "degree": "学位",
+        "specialization": "専門科",
+        "department": "診療科",
+        "createdAt": "作成日",
+        "ascending": "↑ 昇順",
+        "descending": "↓ 降順"
+      },
+      "actions": {
+        "clearFilters": "フィルターをクリア"
+      },
+      "results": {
+        "showing": "{{filtered}} / {{total}} 名の医師を表示",
+        "searchTag": "検索: \"{{term}}\"",
+        "genderTag": "性別: {{gender}}",
+        "degreeTag": "学位: {{degree}}",
+        "typeTag": "タイプ: {{type}}",
+        "departmentTag": "診療科: {{department}}",
+        "doctorId": "ID: {{id}}"
+      }
+    },
+    "actions": {
+      "viewSchedule": "スケジュールを見る",
+      "viewDetails": "医師の詳細を見る"
     }
   }
 }
