@@ -36,12 +36,9 @@ class PatientService:
                 blood_type=data.get('bloodType'),  # Fix field name mapping
             )
             
-            # Debug: Print emergency contacts data
             emergency_contacts = data.get('emergencyContactDtos', [])
-            print(f"Emergency contacts to create: {emergency_contacts}")
             
             for contact_data in emergency_contacts:
-                print(f"Creating emergency contact: {contact_data}")
                 EmergencyContact.objects.create(
                     patient=patient,
                     contact_name=contact_data.get('contactName') or contact_data.get('contact_name'),
