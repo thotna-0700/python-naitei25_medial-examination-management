@@ -41,7 +41,6 @@ import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
 dayjs.extend(utc)
 import { api } from "../../../../shared/services/api"
-import { useTranslation } from "react-i18next"
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -69,7 +68,6 @@ const PatientDetail: React.FC = () => {
     const [currentServiceOrder, setCurrentServiceOrder] = useState<ServiceOrder | null>(null)
     const [roomNote, setRoomNote] = useState<string>("")
     const [patientDetail, setPatientDetail] = useState<any>(null)
-    const { t } = useTranslation()
 
     useEffect(() => {
         const fetchRoomNote = async () => {

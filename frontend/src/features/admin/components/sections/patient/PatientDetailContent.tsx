@@ -51,42 +51,44 @@ import { t } from "i18next";
 
 export function MedicalRecordsContent() {
   const { t } = useTranslation();
-  const { patientId } = useParams()
-  const navigate = useNavigate()
+  const { patientId } = useParams();
+  const navigate = useNavigate();
   const [prescriptions, setPrescriptions] = useState<PrescriptionResponse[]>(
     []
-  )
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedPrescription, setSelectedPrescription] =
-    useState<PrescriptionResponse | null>(null)
+    useState<PrescriptionResponse | null>(null);
 
   const {
     isOpen: isAddModalOpen,
     openModal: openAddModal,
     closeModal: closeAddModal,
-  } = useModal()
+  } = useModal();
   const {
     isOpen: isEditModalOpen,
     openModal: openEditModal,
     closeModal: closeEditModal,
-  } = useModal()
+  } = useModal();
   const {
     isOpen: isDeleteConfirmModalOpen,
     openModal: openDeleteConfirmModal,
     closeModal: closeDeleteConfirmModal,
-  } = useModal()
-  const [deletingPrescriptionId, setDeletingPrescriptionId] = useState<number | null>(null)
+  } = useModal();
+  const [deletingPrescriptionId, setDeletingPrescriptionId] = useState<
+    number | null
+  >(null);
 
-  // Pagination state for medical records
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // 5 medical records per page
 
-  // Filter, sort, and search state for medical records
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "diagnosis">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [filteredPrescriptions, setFilteredPrescriptions] = useState<PrescriptionResponse[]>([]);
+  const [filteredPrescriptions, setFilteredPrescriptions] = useState<
+    PrescriptionResponse[]
+  >([]);
 
   const fetchMedicalRecords = async () => {
     if (!patientId) {
@@ -97,9 +99,10 @@ export function MedicalRecordsContent() {
     setLoading(true);
     setError(null);
     try {
-      const data = await pharmacyService.getPrescriptionHistoryByPatientId(Number(patientId))
+      const data = await pharmacyService.getPrescriptionHistoryByPatientId(
+        Number(patientId)
+      );
 
-      // Gắn quantity + lọc bỏ prescription/status cancel + lọc bỏ detail/status cancel
       const mappedData = data
         .map((prescription: any) => ({
           ...prescription,
@@ -107,13 +110,21 @@ export function MedicalRecordsContent() {
             prescription.prescription_details
               ?.map((detail: any) => ({
                 ...detail,
-                quantity: detail.quantity !== undefined && detail.quantity !== null ? Number(detail.quantity) : 1,
+                quantity:
+                  detail.quantity !== undefined && detail.quantity !== null
+                    ? Number(detail.quantity)
+                    : 1,
               }))
               .filter((d: any) => d.status !== "cancel") ?? [],
         }))
         .filter((p: any) => p.status !== "cancel")
+        .sort((a: any, b: any) => {
+          const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+          const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+          return bTime - aTime;
+        });
 
-      setPrescriptions(mappedData)
+      setPrescriptions(mappedData);
     } catch (err) {
       console.error(t("patientDetail.medicalRecords.error.loadLog"), err);
       setError(t("patientDetail.medicalRecords.error.load"));
@@ -148,7 +159,9 @@ export function MedicalRecordsContent() {
   };
 
   const handleEditMedicalRecord = (prescriptionId: number) => {
-    const prescriptionToEdit = prescriptions.find((p) => p.id === prescriptionId)
+    const prescriptionToEdit = prescriptions.find(
+      (p) => p.id === prescriptionId
+    );
     if (prescriptionToEdit) {
       setSelectedPrescription(prescriptionToEdit);
       openEditModal();
@@ -174,14 +187,14 @@ export function MedicalRecordsContent() {
           prescription_notes: detail.prescription_notes ?? "",
           status: detail.status ?? "active",
         })),
-      }
+      };
 
-      console.log("=== DEBUG UPDATE PAYLOAD ===", finalData)
+      console.log("=== DEBUG UPDATE PAYLOAD ===", finalData);
 
-      await pharmacyService.updatePrescription(prescriptionId, finalData)
-      await fetchMedicalRecords()
-      closeEditModal()
-      alert(t("patientDetail.medicalRecords.success.update"))
+      await pharmacyService.updatePrescription(prescriptionId, finalData);
+      await fetchMedicalRecords();
+      closeEditModal();
+      alert(t("patientDetail.medicalRecords.success.update"));
     } catch (err) {
       console.error(t("patientDetail.medicalRecords.error.updateLog"), err);
       alert(t("patientDetail.medicalRecords.error.update"));
@@ -213,12 +226,17 @@ export function MedicalRecordsContent() {
 
     // Apply search filter
     if (searchTerm.trim()) {
-      filtered = filtered.filter((prescription) =>
-        prescription.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prescription.note?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prescription.prescriptionDetails?.some((detail) =>
-          detail.medicine.medicineName.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      filtered = filtered.filter(
+        (prescription) =>
+          prescription.diagnosis
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          prescription.note?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          prescription.prescriptionDetails?.some((detail) =>
+            detail.medicine.medicineName
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          )
       );
     }
 
@@ -227,7 +245,8 @@ export function MedicalRecordsContent() {
       let compareValue = 0;
 
       if (sortBy === "date") {
-        compareValue = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        compareValue =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       } else if (sortBy === "diagnosis") {
         compareValue = (a.diagnosis || "").localeCompare(b.diagnosis || "");
       }
@@ -247,7 +266,9 @@ export function MedicalRecordsContent() {
   return (
     <div className="font-outfit bg-white py-6 px-4 rounded-lg border border-gray-200">
       <div className="flex justify-between mb-4 ml-1">
-        <h2 className="text-xl font-semibold">{t("patientDetail.medicalRecords.title")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("patientDetail.medicalRecords.title")}
+        </h2>
         <button
           className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70"
           onClick={openAddModal}
@@ -275,17 +296,27 @@ export function MedicalRecordsContent() {
           <div className="flex gap-2">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as "date" | "diagnosis")}
+              onChange={(e) =>
+                setSortBy(e.target.value as "date" | "diagnosis")
+              }
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="date">{t('patientDetail.medicalRecords.sort.date')}</option>
-              <option value="diagnosis">{t('patientDetail.medicalRecords.sort.diagnosis')}</option>
+              <option value="date">
+                {t("patientDetail.medicalRecords.sort.date")}
+              </option>
+              <option value="diagnosis">
+                {t("patientDetail.medicalRecords.sort.diagnosis")}
+              </option>
             </select>
 
             <button
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
               className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              title={sortOrder === "asc" ? t('patientDetail.medicalRecords.sort.toDesc') : t('patientDetail.medicalRecords.sort.toAsc')}
+              title={
+                sortOrder === "asc"
+                  ? t("patientDetail.medicalRecords.sort.toDesc")
+                  : t("patientDetail.medicalRecords.sort.toAsc")
+              }
             >
               {sortOrder === "asc" ? "↑" : "↓"}
             </button>
@@ -294,14 +325,18 @@ export function MedicalRecordsContent() {
 
         {/* Results count */}
         <div className="text-sm text-gray-600">
-          {t('patientDetail.medicalRecords.resultsCount', { shown: filteredPrescriptions.length, total: prescriptions.length })}
+          {t("patientDetail.medicalRecords.resultsCount", {
+            shown: filteredPrescriptions.length,
+            total: prescriptions.length,
+          })}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
         {loading ? (
           <div className="text-center py-8 text-gray-500 flex items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> {t('patientDetail.medicalRecords.loading')}
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />{" "}
+            {t("patientDetail.medicalRecords.loading")}
           </div>
         ) : error ? (
           <div className="text-center py-8 text-red-600">
@@ -310,18 +345,23 @@ export function MedicalRecordsContent() {
               onClick={fetchMedicalRecords}
               className="mt-2 px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
             >
-              {t('common.retry')}
+              {t("common.retry")}
             </button>
           </div>
         ) : filteredPrescriptions.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            {searchTerm.trim() ? t('patientDetail.medicalRecords.emptyFiltered') : t('patientDetail.medicalRecords.empty')}
+            {searchTerm.trim()
+              ? t("patientDetail.medicalRecords.emptyFiltered")
+              : t("patientDetail.medicalRecords.empty")}
           </div>
         ) : (
           (() => {
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const paginatedPrescriptions = filteredPrescriptions.slice(startIndex, endIndex);
+            const paginatedPrescriptions = filteredPrescriptions.slice(
+              startIndex,
+              endIndex
+            );
 
             return paginatedPrescriptions.map((pres) => (
               <MedicalRecord
@@ -364,8 +404,12 @@ export function MedicalRecordsContent() {
         onConfirm={handleConfirmDeleteMedicalRecord}
         title={t("patientDetail.medicalRecords.deleteConfirm.title")}
         message={t("patientDetail.medicalRecords.deleteConfirm.message")}
-        confirmButtonText={t("patientDetail.medicalRecords.deleteConfirm.confirm")}
-        cancelButtonText={t("patientDetail.medicalRecords.deleteConfirm.cancel")}
+        confirmButtonText={t(
+          "patientDetail.medicalRecords.deleteConfirm.confirm"
+        )}
+        cancelButtonText={t(
+          "patientDetail.medicalRecords.deleteConfirm.cancel"
+        )}
       />
     </div>
   );
@@ -379,11 +423,16 @@ export function AppointmentsContent() {
   const { patientId } = useParams();
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
-  const [statusChangeAppointment, setStatusChangeAppointment] =
-    useState<{ appointmentId: number; currentStatus: string } | null>(null);
+  const [statusChangeAppointment, setStatusChangeAppointment] = useState<{
+    appointmentId: number;
+    currentStatus: string;
+  } | null>(null);
   const [selectedNewStatus, setSelectedNewStatus] = useState<string>("");
   const [isChangingStatus, setIsChangingStatus] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   // Pagination state for appointments
   const [appointmentCurrentPage, setAppointmentCurrentPage] = useState(1);
@@ -391,12 +440,18 @@ export function AppointmentsContent() {
 
   // Filter, sort, and search state for appointments
   const [appointmentSearchTerm, setAppointmentSearchTerm] = useState("");
-  const [appointmentSortBy, setAppointmentSortBy] = useState<"date" | "doctor" | "status">("date");
-  const [appointmentSortOrder, setAppointmentSortOrder] = useState<"asc" | "desc">("desc");
+  const [appointmentSortBy, setAppointmentSortBy] = useState<
+    "date" | "doctor" | "status"
+  >("date");
+  const [appointmentSortOrder, setAppointmentSortOrder] = useState<
+    "asc" | "desc"
+  >("desc");
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<
+    Appointment[]
+  >([]);
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
@@ -430,16 +485,16 @@ export function AppointmentsContent() {
           appt.status === "P"
             ? "PENDING"
             : appt.status === "C"
-              ? "CONFIRMED"
-              : appt.status === "X"
-                ? "CANCELLED"
-                : appt.status === "D"
-                  ? "COMPLETED"
-                  : appt.status === "N"
-                    ? "NO_SHOW"
-                    : appt.status === "I"
-                      ? "IN_PROGRESS"
-                      : "PENDING",
+            ? "CONFIRMED"
+            : appt.status === "X"
+            ? "CANCELLED"
+            : appt.status === "D"
+            ? "COMPLETED"
+            : appt.status === "N"
+            ? "NO_SHOW"
+            : appt.status === "I"
+            ? "IN_PROGRESS"
+            : "PENDING",
         createdAt: appt.createdAt,
         prescriptionId: appt.prescriptionId,
       }));
@@ -458,16 +513,25 @@ export function AppointmentsContent() {
 
     // Apply search filter
     if (appointmentSearchTerm.trim()) {
-      filtered = filtered.filter(appointment =>
-        appointment.doctorInfo?.fullName?.toLowerCase().includes(appointmentSearchTerm.toLowerCase()) ||
-        appointment.appointmentId.toString().includes(appointmentSearchTerm) ||
-        appointment.symptoms?.toLowerCase().includes(appointmentSearchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (appointment) =>
+          appointment.doctorInfo?.fullName
+            ?.toLowerCase()
+            .includes(appointmentSearchTerm.toLowerCase()) ||
+          appointment.appointmentId
+            .toString()
+            .includes(appointmentSearchTerm) ||
+          appointment.symptoms
+            ?.toLowerCase()
+            .includes(appointmentSearchTerm.toLowerCase())
       );
     }
 
     // Apply status filter
     if (statusFilter) {
-      filtered = filtered.filter(appointment => appointment.appointmentStatus === statusFilter);
+      filtered = filtered.filter(
+        (appointment) => appointment.appointmentStatus === statusFilter
+      );
     }
 
     // Apply sorting
@@ -475,9 +539,12 @@ export function AppointmentsContent() {
       let compareValue = 0;
 
       if (appointmentSortBy === "date") {
-        compareValue = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        compareValue =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       } else if (appointmentSortBy === "doctor") {
-        compareValue = (a.doctorInfo?.fullName || "").localeCompare(b.doctorInfo?.fullName || "");
+        compareValue = (a.doctorInfo?.fullName || "").localeCompare(
+          b.doctorInfo?.fullName || ""
+        );
       } else if (appointmentSortBy === "status") {
         compareValue = a.appointmentStatus.localeCompare(b.appointmentStatus);
       }
@@ -492,7 +559,13 @@ export function AppointmentsContent() {
   // Apply filters when dependencies change
   useEffect(() => {
     applyAppointmentFiltersAndSort();
-  }, [appointments, appointmentSearchTerm, appointmentSortBy, appointmentSortOrder, statusFilter]);
+  }, [
+    appointments,
+    appointmentSearchTerm,
+    appointmentSortBy,
+    appointmentSortOrder,
+    statusFilter,
+  ]);
 
   useEffect(() => {
     reloadAppointments();
@@ -504,7 +577,10 @@ export function AppointmentsContent() {
   ) => {
     try {
       setLoading(true);
-      await appointmentService.updateAppointmentStatus(appointmentId, selectedStatus);
+      await appointmentService.updateAppointmentStatus(
+        appointmentId,
+        selectedStatus
+      );
 
       // Reload appointments to reflect the change
       await reloadAppointments();
@@ -518,17 +594,25 @@ export function AppointmentsContent() {
       };
 
       // Success notification
-      showToast(`Thành công! Đã chuyển trạng thái cuộc hẹn thành: ${statusLabels[selectedStatus] || selectedStatus}`, 'success');
+      showToast(
+        `Thành công! Đã chuyển trạng thái cuộc hẹn thành: ${
+          statusLabels[selectedStatus] || selectedStatus
+        }`,
+        "success"
+      );
       setStatusChangeAppointment(null);
       setSelectedNewStatus("");
     } catch (error) {
       console.error("Error changing appointment status:", error);
-      showToast("❌ Lỗi! Không thể thay đổi trạng thái cuộc hẹn!", 'error');
+      showToast("❌ Lỗi! Không thể thay đổi trạng thái cuộc hẹn!", "error");
       setLoading(false);
     }
   };
 
-  const openStatusChangeModal = (appointmentId: number, currentStatus: string) => {
+  const openStatusChangeModal = (
+    appointmentId: number,
+    currentStatus: string
+  ) => {
     setStatusChangeAppointment({ appointmentId, currentStatus });
     setSelectedNewStatus(currentStatus);
   };
@@ -541,10 +625,17 @@ export function AppointmentsContent() {
       return;
     }
 
-    const confirmed = confirm(`Bạn có chắc chắn muốn chuyển trạng thái cuộc hẹn thành "${getStatusLabel(selectedNewStatus)}"?`);
+    const confirmed = confirm(
+      `Bạn có chắc chắn muốn chuyển trạng thái cuộc hẹn thành "${getStatusLabel(
+        selectedNewStatus
+      )}"?`
+    );
     if (confirmed) {
       setIsChangingStatus(true);
-      await handleStatusChange(statusChangeAppointment.appointmentId, selectedNewStatus);
+      await handleStatusChange(
+        statusChangeAppointment.appointmentId,
+        selectedNewStatus
+      );
       setIsChangingStatus(false);
     }
   };
@@ -561,7 +652,9 @@ export function AppointmentsContent() {
 
   return (
     <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
-      <h2 className="text-xl font-semibold mb-4 ml-1">{t("patientDetail.appointments.title")}</h2>
+      <h2 className="text-xl font-semibold mb-4 ml-1">
+        {t("patientDetail.appointments.title")}
+      </h2>
 
       {/* Search, Filter, and Sort Controls */}
       <div className="mb-4 space-y-3">
@@ -584,13 +677,27 @@ export function AppointmentsContent() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">{t("patientDetail.appointments.status.all")}</option>
-              <option value="PENDING">{t("patientDetail.appointments.status.pending")}</option>
-              <option value="CONFIRMED">{t("patientDetail.appointments.status.confirmed")}</option>
-              <option value="COMPLETED">{t("patientDetail.appointments.status.completed")}</option>
-              <option value="CANCELLED">{t("patientDetail.appointments.status.cancelled")}</option>
-              <option value="NO_SHOW">{t("patientDetail.appointments.status.noShow")}</option>
-              <option value="IN_PROGRESS">{t("patientDetail.appointments.status.noShow")}</option>
+              <option value="">
+                {t("patientDetail.appointments.status.all")}
+              </option>
+              <option value="PENDING">
+                {t("patientDetail.appointments.status.pending")}
+              </option>
+              <option value="CONFIRMED">
+                {t("patientDetail.appointments.status.confirmed")}
+              </option>
+              <option value="COMPLETED">
+                {t("patientDetail.appointments.status.completed")}
+              </option>
+              <option value="CANCELLED">
+                {t("patientDetail.appointments.status.cancelled")}
+              </option>
+              <option value="NO_SHOW">
+                {t("patientDetail.appointments.status.noShow")}
+              </option>
+              <option value="IN_PROGRESS">
+                {t("patientDetail.appointments.status.noShow")}
+              </option>
             </select>
           </div>
 
@@ -598,18 +705,36 @@ export function AppointmentsContent() {
           <div className="flex gap-2">
             <select
               value={appointmentSortBy}
-              onChange={(e) => setAppointmentSortBy(e.target.value as "date" | "doctor" | "status")}
+              onChange={(e) =>
+                setAppointmentSortBy(
+                  e.target.value as "date" | "doctor" | "status"
+                )
+              }
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="date">{t("patientDetail.appointments.sort.date")}</option>
-              <option value="doctor">{t("patientDetail.appointments.sort.doctor")}</option>
-              <option value="status">{t("patientDetail.appointments.sort.status")}</option>
+              <option value="date">
+                {t("patientDetail.appointments.sort.date")}
+              </option>
+              <option value="doctor">
+                {t("patientDetail.appointments.sort.doctor")}
+              </option>
+              <option value="status">
+                {t("patientDetail.appointments.sort.status")}
+              </option>
             </select>
 
             <button
-              onClick={() => setAppointmentSortOrder(appointmentSortOrder === "asc" ? "desc" : "asc")}
+              onClick={() =>
+                setAppointmentSortOrder(
+                  appointmentSortOrder === "asc" ? "desc" : "asc"
+                )
+              }
               className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              title={appointmentSortOrder === "asc" ? t('patientDetail.medicalRecords.sort.toDesc') : t('patientDetail.medicalRecords.sort.toAsc')}
+              title={
+                appointmentSortOrder === "asc"
+                  ? t("patientDetail.medicalRecords.sort.toDesc")
+                  : t("patientDetail.medicalRecords.sort.toAsc")
+              }
             >
               {appointmentSortOrder === "asc" ? "↑" : "↓"}
             </button>
@@ -618,7 +743,10 @@ export function AppointmentsContent() {
 
         {/* Results count */}
         <div className="text-sm text-gray-600">
-          {t("patientDetail.appointments.resultsCount", { shown: filteredAppointments.length, total: appointments.length })}
+          {t("patientDetail.appointments.resultsCount", {
+            shown: filteredAppointments.length,
+            total: appointments.length,
+          })}
         </div>
       </div>
       <Table>
@@ -663,15 +791,19 @@ export function AppointmentsContent() {
               <TableCell className="text-center text-gray-500 py-8" colSpan={5}>
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-base-600 mr-2"></div>
-                  {t('common.loading')}
+                  {t("common.loading")}
                 </div>
               </TableCell>
             </TableRow>
           ) : filteredAppointments.length > 0 ? (
             (() => {
-              const startIndex = (appointmentCurrentPage - 1) * appointmentItemsPerPage;
+              const startIndex =
+                (appointmentCurrentPage - 1) * appointmentItemsPerPage;
               const endIndex = startIndex + appointmentItemsPerPage;
-              const paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
+              const paginatedAppointments = filteredAppointments.slice(
+                startIndex,
+                endIndex
+              );
 
               return paginatedAppointments.map((appt) => (
                 <TableRow key={appt.appointmentId}>
@@ -688,27 +820,27 @@ export function AppointmentsContent() {
                         appt.appointmentStatus === "PENDING"
                           ? "pending"
                           : appt.appointmentStatus === "COMPLETED"
-                            ? "completed"
-                            : appt.appointmentStatus === "CANCELLED"
-                              ? "cancelled"
-                              : appt.appointmentStatus === "CONFIRMED"
-                                ? "confirmed"
-                                : appt.appointmentStatus === "NO_SHOW"
-                                  ? "error"
-                                  : appt.appointmentStatus === "IN_PROGRESS"
-                                    ? "warning"
-                                    : "light"
+                          ? "completed"
+                          : appt.appointmentStatus === "CANCELLED"
+                          ? "cancelled"
+                          : appt.appointmentStatus === "CONFIRMED"
+                          ? "confirmed"
+                          : appt.appointmentStatus === "NO_SHOW"
+                          ? "error"
+                          : appt.appointmentStatus === "IN_PROGRESS"
+                          ? "warning"
+                          : "light"
                       }
                     >
                       {appt.appointmentStatus === "PENDING"
                         ? t("patientDetail.appointments.status.pending")
                         : appt.appointmentStatus === "COMPLETED"
-                          ? t("patientDetail.appointments.status.completed")
-                          : appt.appointmentStatus === "CANCELLED"
-                            ? t("patientDetail.appointments.status.cancelled")
-                            : appt.appointmentStatus === "CONFIRMED"
-                              ? t("patientDetail.appointments.status.confirmed")
-                              : t("patientDetail.appointments.status.unknown")}
+                        ? t("patientDetail.appointments.status.completed")
+                        : appt.appointmentStatus === "CANCELLED"
+                        ? t("patientDetail.appointments.status.cancelled")
+                        : appt.appointmentStatus === "CONFIRMED"
+                        ? t("patientDetail.appointments.status.confirmed")
+                        : t("patientDetail.appointments.status.unknown")}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
@@ -765,7 +897,9 @@ export function AppointmentsContent() {
           ) : (
             <TableRow>
               <TableCell className="text-center text-gray-500 py-8" colSpan={5}>
-                {appointmentSearchTerm.trim() || statusFilter ? t("patientDetail.appointments.emptyFiltered") : t("patientDetail.appointments.empty")}
+                {appointmentSearchTerm.trim() || statusFilter
+                  ? t("patientDetail.appointments.emptyFiltered")
+                  : t("patientDetail.appointments.empty")}
               </TableCell>
             </TableRow>
           )}
@@ -776,7 +910,9 @@ export function AppointmentsContent() {
       {filteredAppointments.length > 0 && (
         <Pagination
           currentPage={appointmentCurrentPage}
-          totalPages={Math.ceil(filteredAppointments.length / appointmentItemsPerPage)}
+          totalPages={Math.ceil(
+            filteredAppointments.length / appointmentItemsPerPage
+          )}
           onPageChange={setAppointmentCurrentPage}
           itemsPerPage={appointmentItemsPerPage}
           totalItems={filteredAppointments.length}
@@ -817,11 +953,21 @@ export function AppointmentsContent() {
                 onChange={(e) => setSelectedNewStatus(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">{t("patientDetail.appointments.changeStatus.placeholder")}</option>
-                <option value="PENDING">{t("patientDetail.appointments.status.pending")}</option>
-                <option value="CONFIRMED">{t("patientDetail.appointments.status.confirmed")}</option>
-                <option value="COMPLETED">{t("patientDetail.appointments.status.completed")}</option>
-                <option value="CANCELLED">{t("patientDetail.appointments.status.cancelled")}</option>
+                <option value="">
+                  {t("patientDetail.appointments.changeStatus.placeholder")}
+                </option>
+                <option value="PENDING">
+                  {t("patientDetail.appointments.status.pending")}
+                </option>
+                <option value="CONFIRMED">
+                  {t("patientDetail.appointments.status.confirmed")}
+                </option>
+                <option value="COMPLETED">
+                  {t("patientDetail.appointments.status.completed")}
+                </option>
+                <option value="CANCELLED">
+                  {t("patientDetail.appointments.status.cancelled")}
+                </option>
               </select>
             </div>
 
@@ -831,7 +977,7 @@ export function AppointmentsContent() {
                 disabled={isChangingStatus}
                 className="flex-1 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {t('common.cancel')}
+                {t("common.cancel")}
               </button>
               <button
                 onClick={confirmStatusChange}
@@ -842,7 +988,9 @@ export function AppointmentsContent() {
                 }
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {isChangingStatus ? t("patientDetail.appointments.changeStatus.processing") : t("patientDetail.appointments.changeStatus.confirm")}
+                {isChangingStatus
+                  ? t("patientDetail.appointments.changeStatus.processing")
+                  : t("patientDetail.appointments.changeStatus.confirm")}
               </button>
             </div>
 
@@ -851,7 +999,9 @@ export function AppointmentsContent() {
               <div className="absolute inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center rounded-xl">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                  <p className="text-gray-600 font-medium">{t("patientDetail.appointments.changeStatus.loading")}</p>
+                  <p className="text-gray-600 font-medium">
+                    {t("patientDetail.appointments.changeStatus.loading")}
+                  </p>
                 </div>
               </div>
             )}
@@ -862,10 +1012,13 @@ export function AppointmentsContent() {
       {/* Toast Notification */}
       {toast && (
         <div className="fixed top-4 right-4 z-[60] animate-in slide-in-from-right duration-300">
-          <div className={`px-6 py-4 rounded-lg shadow-lg max-w-md ${toast.type === 'success'
-            ? 'bg-green-500 text-white'
-            : 'bg-red-500 text-white'
-            }`}>
+          <div
+            className={`px-6 py-4 rounded-lg shadow-lg max-w-md ${
+              toast.type === "success"
+                ? "bg-green-500 text-white"
+                : "bg-red-500 text-white"
+            }`}
+          >
             <div className="flex items-center justify-between">
               <span className="font-medium">{toast.message}</span>
               <button
@@ -901,8 +1054,12 @@ export function InvoicesContent() {
 
   // Filter, sort, and search state for invoices
   const [invoiceSearchTerm, setInvoiceSearchTerm] = useState("");
-  const [invoiceSortBy, setInvoiceSortBy] = useState<"date" | "amount" | "status">("date");
-  const [invoiceSortOrder, setInvoiceSortOrder] = useState<"asc" | "desc">("desc");
+  const [invoiceSortBy, setInvoiceSortBy] = useState<
+    "date" | "amount" | "status"
+  >("date");
+  const [invoiceSortOrder, setInvoiceSortOrder] = useState<"asc" | "desc">(
+    "desc"
+  );
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<string>("");
   const [filteredBills, setFilteredBills] = useState<Bill[]>([]);
 
@@ -967,7 +1124,9 @@ export function InvoicesContent() {
             const serviceOrdersWithInfo = await Promise.all(
               serviceOrders.map(async (order: any) => {
                 try {
-                  const serviceInfo = await servicesService.getServiceById(order.service_id);
+                  const serviceInfo = await servicesService.getServiceById(
+                    order.service_id
+                  );
                   return {
                     ...order,
                     service: {
@@ -1007,7 +1166,7 @@ export function InvoicesContent() {
       setFilteredBills(billsData);
     } catch (err) {
       console.error("Error loading bills:", err);
-      setError(t('patientDetail.invoices.error.load'));
+      setError(t("patientDetail.invoices.error.load"));
     } finally {
       setLoading(false);
     }
@@ -1019,12 +1178,14 @@ export function InvoicesContent() {
 
     // Apply search filter
     if (invoiceSearchTerm.trim()) {
-      filtered = filtered.filter(bill => {
+      filtered = filtered.filter((bill) => {
         const services = billServices[bill.billId || 0] || [];
         return (
           bill.billId?.toString().includes(invoiceSearchTerm) ||
-          services.some(service =>
-            service.serviceName?.toLowerCase().includes(invoiceSearchTerm.toLowerCase())
+          services.some((service) =>
+            service.serviceName
+              ?.toLowerCase()
+              .includes(invoiceSearchTerm.toLowerCase())
           )
         );
       });
@@ -1032,7 +1193,7 @@ export function InvoicesContent() {
 
     // Apply status filter
     if (invoiceStatusFilter) {
-      filtered = filtered.filter(bill => bill.status === invoiceStatusFilter);
+      filtered = filtered.filter((bill) => bill.status === invoiceStatusFilter);
     }
 
     // Apply sorting
@@ -1040,7 +1201,8 @@ export function InvoicesContent() {
       let compareValue = 0;
 
       if (invoiceSortBy === "date") {
-        compareValue = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        compareValue =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       } else if (invoiceSortBy === "amount") {
         compareValue = (a.service_fee || 0) - (b.service_fee || 0);
       } else if (invoiceSortBy === "status") {
@@ -1057,14 +1219,22 @@ export function InvoicesContent() {
   // Apply filters when dependencies change
   useEffect(() => {
     applyInvoiceFiltersAndSort();
-  }, [bills, invoiceSearchTerm, invoiceSortBy, invoiceSortOrder, invoiceStatusFilter, billServices]);
+  }, [
+    bills,
+    invoiceSearchTerm,
+    invoiceSortBy,
+    invoiceSortOrder,
+    invoiceStatusFilter,
+    billServices,
+  ]);
 
   useEffect(() => {
     if (patientId) {
       reloadBills();
-      patientService.getPatientById(Number(patientId))
+      patientService
+        .getPatientById(Number(patientId))
         .then(setPatient)
-        .catch(err => console.error("Error fetching patient:", err));
+        .catch((err) => console.error("Error fetching patient:", err));
     }
   }, [patientId]);
 
@@ -1080,7 +1250,7 @@ export function InvoicesContent() {
           // Thanh toán tiền dịch vụ
           paymentUrl = await paymentService.createServicePayment(bill.billId);
         } else {
-          alert(t('patientDetail.invoices.alert.notRequired'));
+          alert(t("patientDetail.invoices.alert.notRequired"));
           return;
         }
 
@@ -1113,7 +1283,7 @@ export function InvoicesContent() {
         reloadBills();
       }
     } catch (error: any) {
-      alert(error.message || t('patientDetail.invoices.error.payFailed'));
+      alert(error.message || t("patientDetail.invoices.error.payFailed"));
     }
   };
 
@@ -1124,7 +1294,9 @@ export function InvoicesContent() {
 
   return (
     <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
-      <h2 className="text-xl font-semibold mb-4 ml-1">{t('patientDetail.invoices.title')}</h2>
+      <h2 className="text-xl font-semibold mb-4 ml-1">
+        {t("patientDetail.invoices.title")}
+      </h2>
 
       {/* Search, Filter, and Sort Controls */}
       <div className="mb-4 space-y-3">
@@ -1133,7 +1305,7 @@ export function InvoicesContent() {
           <div className="flex-1">
             <input
               type="text"
-              placeholder={t('patientDetail.invoices.searchPlaceholder')}
+              placeholder={t("patientDetail.invoices.searchPlaceholder")}
               value={invoiceSearchTerm}
               onChange={(e) => setInvoiceSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1148,9 +1320,15 @@ export function InvoicesContent() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">{t("patientDetail.invoices.status.all")}</option>
-              <option value="PAID">{t("patientDetail.invoices.status.paid")}</option>
-              <option value="UNPAID">{t("patientDetail.invoices.status.unpaid")}</option>
-              <option value="BOOKING_PAID">{t("patientDetail.invoices.status.bookingPaid")}</option>
+              <option value="PAID">
+                {t("patientDetail.invoices.status.paid")}
+              </option>
+              <option value="UNPAID">
+                {t("patientDetail.invoices.status.unpaid")}
+              </option>
+              <option value="BOOKING_PAID">
+                {t("patientDetail.invoices.status.bookingPaid")}
+              </option>
             </select>
           </div>
 
@@ -1158,18 +1336,32 @@ export function InvoicesContent() {
           <div className="flex gap-2">
             <select
               value={invoiceSortBy}
-              onChange={(e) => setInvoiceSortBy(e.target.value as "date" | "amount" | "status")}
+              onChange={(e) =>
+                setInvoiceSortBy(e.target.value as "date" | "amount" | "status")
+              }
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="date">{t("patientDetail.invoices.sort.date")}</option>
-              <option value="amount">{t("patientDetail.invoices.sort.amount")}</option>
-              <option value="status">{t("patientDetail.invoices.sort.status")}</option>
+              <option value="date">
+                {t("patientDetail.invoices.sort.date")}
+              </option>
+              <option value="amount">
+                {t("patientDetail.invoices.sort.amount")}
+              </option>
+              <option value="status">
+                {t("patientDetail.invoices.sort.status")}
+              </option>
             </select>
 
             <button
-              onClick={() => setInvoiceSortOrder(invoiceSortOrder === "asc" ? "desc" : "asc")}
+              onClick={() =>
+                setInvoiceSortOrder(invoiceSortOrder === "asc" ? "desc" : "asc")
+              }
               className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              title={invoiceSortOrder === "asc" ? t('patientDetail.medicalRecords.sort.toDesc') : t('patientDetail.medicalRecords.sort.toAsc')}
+              title={
+                invoiceSortOrder === "asc"
+                  ? t("patientDetail.medicalRecords.sort.toDesc")
+                  : t("patientDetail.medicalRecords.sort.toAsc")
+              }
             >
               {invoiceSortOrder === "asc" ? "↑" : "↓"}
             </button>
@@ -1179,8 +1371,12 @@ export function InvoicesContent() {
         {/* Results count */}
         <div className="text-sm text-gray-600">
           {t("patientDetail.invoices.resultsCount", {
-            shown: filteredBills.filter(bill => (billServices[bill.billId || 0] || []).length > 0).length,
-            total: bills.filter(bill => (billServices[bill.billId || 0] || []).length > 0).length
+            shown: filteredBills.filter(
+              (bill) => (billServices[bill.billId || 0] || []).length > 0
+            ).length,
+            total: bills.filter(
+              (bill) => (billServices[bill.billId || 0] || []).length > 0
+            ).length,
           })}
         </div>
       </div>
@@ -1232,7 +1428,7 @@ export function InvoicesContent() {
               {loading ? (
                 <TableRow>
                   <TableCell className="text-center py-4" colSpan={6}>
-                    {t('common.loading')}
+                    {t("common.loading")}
                   </TableCell>
                 </TableRow>
               ) : error ? (
@@ -1250,7 +1446,7 @@ export function InvoicesContent() {
                     className="text-center text-gray-500 py-4"
                     colSpan={6}
                   >
-                    {t('patientDetail.invoices.empty')}
+                    {t("patientDetail.invoices.empty")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1267,15 +1463,21 @@ export function InvoicesContent() {
                           className="text-center text-gray-500 py-4"
                           colSpan={6}
                         >
-                          {invoiceSearchTerm.trim() || invoiceStatusFilter ? t('patientDetail.invoices.emptyFiltered') : t('patientDetail.invoices.empty')}
+                          {invoiceSearchTerm.trim() || invoiceStatusFilter
+                            ? t("patientDetail.invoices.emptyFiltered")
+                            : t("patientDetail.invoices.empty")}
                         </TableCell>
                       </TableRow>
                     );
                   }
 
-                  const startIndex = (invoiceCurrentPage - 1) * invoiceItemsPerPage;
+                  const startIndex =
+                    (invoiceCurrentPage - 1) * invoiceItemsPerPage;
                   const endIndex = startIndex + invoiceItemsPerPage;
-                  const paginatedBills = billsWithServices.slice(startIndex, endIndex);
+                  const paginatedBills = billsWithServices.slice(
+                    startIndex,
+                    endIndex
+                  );
 
                   return paginatedBills.map((bill) => {
                     const services = billServices[bill.billId || 0] || [];
@@ -1289,16 +1491,16 @@ export function InvoicesContent() {
                         <TableCell className="px-6 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                           {services.length > 0
                             ? format(
-                              new Date(
-                                services[0].order_time ||
-                                services[0].created_at ||
-                                bill.createdAt
-                              ),
-                              "dd-MM-yyyy"
-                            )
+                                new Date(
+                                  services[0].order_time ||
+                                    services[0].created_at ||
+                                    bill.createdAt
+                                ),
+                                "dd-MM-yyyy"
+                              )
                             : bill.createdAt
-                              ? format(new Date(bill.createdAt), "dd-MM-yyyy")
-                              : "N/A"}
+                            ? format(new Date(bill.createdAt), "dd-MM-yyyy")
+                            : "N/A"}
                         </TableCell>
                         {/* <TableCell className="px-4 py-3 text-gray-700 text-start text-theme-sm dark:text-gray-400">
                         {services.length > 0 ? (
@@ -1326,27 +1528,32 @@ export function InvoicesContent() {
                               bill.status === "PAID"
                                 ? "success"
                                 : bill.status === "UNPAID"
-                                  ? "error"
-                                  : bill.status === "BOOKING_PAID"
-                                    ? "warning"
-                                    : "cancel"
+                                ? "error"
+                                : bill.status === "BOOKING_PAID"
+                                ? "warning"
+                                : "cancel"
                             }
                           >
                             {bill.status === "PAID"
                               ? t("patientDetail.invoices.status.paid")
                               : bill.status === "UNPAID"
-                                ? t("patientDetail.invoices.status.unpaid")
-                                : bill.status === "BOOKING_PAID"
-                                  ? t("patientDetail.invoices.status.bookingPaid")
-                                  : t("patientDetail.invoices.status.cancelled")}
+                              ? t("patientDetail.invoices.status.unpaid")
+                              : bill.status === "BOOKING_PAID"
+                              ? t("patientDetail.invoices.status.bookingPaid")
+                              : t("patientDetail.invoices.status.cancelled")}
                           </Badge>
                         </TableCell>
                         <TableCell className="px-4 py-3 text-gray-700 text-start text-xs text-green-700 font-semibold">
-                          {t("patientDetail.invoices.table.amountWithCurrency", {
-                            amount: calculateTotalFromServices(bill).toLocaleString("vi-VN")
-                          })}
+                          {t(
+                            "patientDetail.invoices.table.amountWithCurrency",
+                            {
+                              amount:
+                                calculateTotalFromServices(bill).toLocaleString(
+                                  "vi-VN"
+                                ),
+                            }
+                          )}
                         </TableCell>
-
 
                         <TableCell className="px-4 py-3 text-gray-500 text-theme-md dark:text-gray-400">
                           <div className="flex gap-2">
@@ -1367,7 +1574,7 @@ export function InvoicesContent() {
                                     clipRule="evenodd"
                                   />
                                 </svg>
-                                {t('patientDetail.invoices.actions.payService')}
+                                {t("patientDetail.invoices.actions.payService")}
                               </button>
                             ) : (
                               <button
@@ -1387,7 +1594,7 @@ export function InvoicesContent() {
                                     clipRule="evenodd"
                                   />
                                 </svg>
-                                {t('common.viewDetails')}
+                                {t("common.viewDetails")}
                               </button>
                             )}
                           </div>
@@ -1408,20 +1615,24 @@ export function InvoicesContent() {
           const services = billServices[bill.billId || 0] || [];
           return services.length > 0;
         });
-        return billsWithServices.length > 0 && (
-          <Pagination
-            currentPage={invoiceCurrentPage}
-            totalPages={Math.ceil(billsWithServices.length / invoiceItemsPerPage)}
-            onPageChange={setInvoiceCurrentPage}
-            itemsPerPage={invoiceItemsPerPage}
-            totalItems={billsWithServices.length}
-          />
+        return (
+          billsWithServices.length > 0 && (
+            <Pagination
+              currentPage={invoiceCurrentPage}
+              totalPages={Math.ceil(
+                billsWithServices.length / invoiceItemsPerPage
+              )}
+              onPageChange={setInvoiceCurrentPage}
+              itemsPerPage={invoiceItemsPerPage}
+              totalItems={billsWithServices.length}
+            />
+          )
         );
       })()}
 
       {selectedBill && (
         <BillModal
-          {...selectedBill}   // spread thẳng các field của Bill
+          {...selectedBill} // spread thẳng các field của Bill
           services={billServices[selectedBill.billId || 0] || []}
           isOpen={true}
           onClose={() => setSelectedBill(null)}
@@ -1468,7 +1679,6 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
   useEffect(() => {
     setCurrentPatient(patient);
   }, [patient]);
-
 
   const handleEditChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -1528,7 +1738,9 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
   return (
     <div className="bg-white py-6 px-5 rounded-lg border border-gray-200">
       <div className="flex justify-between mb-4">
-        <h2 className="text-xl font-semibold">{t("patientDetail.info.title")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("patientDetail.info.title")}
+        </h2>
         <button
           className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70"
           onClick={() => setShowEditModal(true)}
@@ -1539,51 +1751,71 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
       <div className="space-y-4 ml-1">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.fullName")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.fullName")}
+            </p>
             <p className="font-medium">{currentPatient?.fullName}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.patientId")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.patientId")}
+            </p>
             <p className="font-medium">
               BN{currentPatient?.patientId?.toString().padStart(4, "0")}
             </p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.birthday")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.birthday")}
+            </p>
             <p className="font-medium">{currentPatient?.birthday}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.gender")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.gender")}
+            </p>
             <p className="font-medium">
               {currentPatient?.gender === "MALE"
                 ? t("common.gender.male")
                 : currentPatient?.gender === "FEMALE"
-                  ? t("common.gender.female")
-                  : t("common.gender.other")}
+                ? t("common.gender.female")
+                : t("common.gender.other")}
             </p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.phone")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.phone")}
+            </p>
             <p className="font-medium">{currentPatient?.phone || ""}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.email")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.email")}
+            </p>
             <p className="font-medium">{currentPatient?.email || ""}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.address")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.address")}
+            </p>
             <p className="font-medium">{currentPatient?.address}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.insuranceNumber")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.insuranceNumber")}
+            </p>
             <p className="font-medium">{currentPatient?.insuranceNumber}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.identityNumber")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.identityNumber")}
+            </p>
             <p className="font-medium">{currentPatient?.identityNumber}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-sm">{t("patientDetail.info.fields.createdAt")}</p>
+            <p className="text-gray-500 text-sm">
+              {t("patientDetail.info.fields.createdAt")}
+            </p>
             <p className="font-medium">
               {currentPatient?.createdAt
                 ? format(new Date(currentPatient?.createdAt), "dd-MM-yyyy")
@@ -1645,20 +1877,24 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t("patientDetail.info.form.fullName")} <span className="text-red-500">*</span>
+                            {t("patientDetail.info.form.fullName")}{" "}
+                            <span className="text-red-500">*</span>
                           </label>
                           <input
                             name="fullName"
                             value={editData.fullName || ""}
                             onChange={handleEditChange}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                            placeholder={t("patientDetail.info.form.placeholders.fullName")}
+                            placeholder={t(
+                              "patientDetail.info.form.placeholders.fullName"
+                            )}
                             required
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t("patientDetail.info.form.gender")} <span className="text-red-500">*</span>
+                            {t("patientDetail.info.form.gender")}{" "}
+                            <span className="text-red-500">*</span>
                           </label>
                           <select
                             name="gender"
@@ -1667,35 +1903,52 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                             required
                           >
-                            <option value="">{t("personalInfo.selectGender")}</option>
-                            <option value="MALE">{t("common.gender.male")}</option>
-                            <option value="FEMALE">{t("common.gender.female")}</option>
-                            <option value="OTHER">{t("common.gender.other")}</option>
+                            <option value="">
+                              {t("personalInfo.selectGender")}
+                            </option>
+                            <option value="MALE">
+                              {t("common.gender.male")}
+                            </option>
+                            <option value="FEMALE">
+                              {t("common.gender.female")}
+                            </option>
+                            <option value="OTHER">
+                              {t("common.gender.other")}
+                            </option>
                           </select>
                         </div>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t("patientDetail.info.form.birthday")} <span className="text-red-500">*</span>
+                          {t("patientDetail.info.form.birthday")}{" "}
+                          <span className="text-red-500">*</span>
                         </label>
                         <div className="relative w-full">
                           <DatePicker
-                            selected={editData.birthday ? new Date(editData.birthday) : null}
+                            selected={
+                              editData.birthday
+                                ? new Date(editData.birthday)
+                                : null
+                            }
                             onChange={(date: Date | null) =>
                               setEditData((prev) => ({
                                 ...prev,
-                                birthday: date ? date.toISOString().split("T")[0] : "",
+                                birthday: date
+                                  ? date.toISOString().split("T")[0]
+                                  : "",
                               }))
                             }
                             dateFormat="yyyy-MM-dd"
                             className="w-full p-3 pr-10 border border-gray-300 rounded-lg 
                                       focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                            placeholderText={t("patientDetail.info.form.placeholders.birthday")}
+                            placeholderText={t(
+                              "patientDetail.info.form.placeholders.birthday"
+                            )}
                             wrapperClassName="w-full"
                             showMonthDropdown
                             showYearDropdown
-                            dropdownMode="select"  
+                            dropdownMode="select"
                             required
                           />
                         </div>
@@ -1719,7 +1972,9 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                             value={editData.phone || ""}
                             onChange={handleEditChange}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                            placeholder={t("patientDetail.info.form.placeholders.phone")}
+                            placeholder={t(
+                              "patientDetail.info.form.placeholders.phone"
+                            )}
                           />
                         </div>
                         <div>
@@ -1732,7 +1987,9 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                             value={editData.email || ""}
                             onChange={handleEditChange}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                            placeholder={t("patientDetail.info.form.placeholders.email")}
+                            placeholder={t(
+                              "patientDetail.info.form.placeholders.email"
+                            )}
                           />
                         </div>
                       </div>
@@ -1746,7 +2003,9 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                           value={editData.address || ""}
                           onChange={handleEditChange}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                          placeholder={t("patientDetail.info.form.placeholders.address")}
+                          placeholder={t(
+                            "patientDetail.info.form.placeholders.address"
+                          )}
                         />
                       </div>
                     </div>
@@ -1767,7 +2026,9 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                           value={editData.identityNumber || ""}
                           onChange={handleEditChange}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                          placeholder={t("patientDetail.info.form.placeholders.identityNumber")}
+                          placeholder={t(
+                            "patientDetail.info.form.placeholders.identityNumber"
+                          )}
                         />
                       </div>
                       <div>
@@ -1779,7 +2040,9 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                           value={editData.insuranceNumber || ""}
                           onChange={handleEditChange}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
-                          placeholder={t("patientDetail.info.form.placeholders.insuranceNumber")}
+                          placeholder={t(
+                            "patientDetail.info.form.placeholders.insuranceNumber"
+                          )}
                         />
                       </div>
                     </div>
@@ -1842,7 +2105,9 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                               {t("patientDetail.info.avatar.previewTitle")}
                             </h4>
                             <p className="text-xs text-gray-500 mt-1">
-                              {t("patientDetail.info.avatar.previewDescription")}
+                              {t(
+                                "patientDetail.info.avatar.previewDescription"
+                              )}
                             </p>
                             <button
                               type="button"
@@ -1897,7 +2162,7 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                     onClick={() => setShowEditModal(false)}
                     disabled={loading}
                   >
-                    {t('common.cancel')}
+                    {t("common.cancel")}
                   </button>
                   <button
                     type="submit"
@@ -1905,7 +2170,7 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
                     className="px-4 py-2.5 text-sm font-medium text-white bg-base-600 rounded-lg hover:bg-base-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={loading}
                   >
-                    {loading ? t('common.saving') : t("common.saveChanges")}
+                    {loading ? t("common.saving") : t("common.saveChanges")}
                   </button>
                 </div>
               </div>
@@ -1917,14 +2182,16 @@ export function PatientInfoContent({ patient }: { patient: Patient }) {
       {errorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-red-600">{t('common.error')}</h2>
+            <h2 className="text-lg font-semibold mb-4 text-red-600">
+              {t("common.error")}
+            </h2>
             <p>{errorModal}</p>
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setErrorModal(null)}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
               >
-                {t('common.close')}
+                {t("common.close")}
               </button>
             </div>
           </div>
@@ -2016,7 +2283,9 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
   return (
     <div className="bg-white py-6 px-5 rounded-lg border border-gray-200">
       <div className="flex justify-between mb-4">
-        <h2 className="text-xl font-semibold">{t("patientDetail.healthInfo.title")}</h2>
+        <h2 className="text-xl font-semibold">
+          {t("patientDetail.healthInfo.title")}
+        </h2>
         <button
           className="flex items-center justify-center bg-base-700 py-2.5 px-5 rounded-lg text-white text-sm hover:bg-base-700/70"
           onClick={() => setShowEditModal(true)}
@@ -2026,7 +2295,9 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
       </div>
       <div className="space-y-6">
         <div>
-          <h3 className="font-medium mb-2">{t("patientDetail.healthInfo.allergies")}</h3>
+          <h3 className="font-medium mb-2">
+            {t("patientDetail.healthInfo.allergies")}
+          </h3>
           <ul className="list-disc pl-5 space-y-1">
             {patientData?.allergies?.split("\n").map((item, idx) => (
               <li key={idx}>{item}</li>
@@ -2034,18 +2305,26 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
           </ul>
         </div>
         <div>
-          <h3 className="font-medium mb-2">{t("patientDetail.healthInfo.metrics")}</h3>
+          <h3 className="font-medium mb-2">
+            {t("patientDetail.healthInfo.metrics")}
+          </h3>
           <div className="grid grid-cols-3 gap-4">
             <div className="p-3 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-500 text-sm">{t("patientDetail.healthInfo.height")}</p>
+              <p className="text-gray-500 text-sm">
+                {t("patientDetail.healthInfo.height")}
+              </p>
               <p className="font-medium">{patientData?.height} cm</p>
             </div>
             <div className="p-3 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-500 text-sm">{t("patientDetail.healthInfo.weight")}</p>
+              <p className="text-gray-500 text-sm">
+                {t("patientDetail.healthInfo.weight")}
+              </p>
               <p className="font-medium">{patientData?.weight} kg</p>
             </div>
             <div className="p-3 bg-gray-50 rounded-lg text-center">
-              <p className="text-gray-500 text-sm">{t("patientDetail.healthInfo.bloodType")}</p>
+              <p className="text-gray-500 text-sm">
+                {t("patientDetail.healthInfo.bloodType")}
+              </p>
               <p className="font-medium">
                 {patientData?.bloodType || t("common.notAvailable")}
               </p>
@@ -2106,7 +2385,9 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
                       value={editData.allergies || ""}
                       onChange={handleEditChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0 min-h-[80px] resize-none"
-                      placeholder={t("patientDetail.healthInfo.allergiesPlaceholder")}
+                      placeholder={t(
+                        "patientDetail.healthInfo.allergiesPlaceholder"
+                      )}
                     />
                   </div>
 
@@ -2122,7 +2403,9 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
                         onChange={handleEditChange}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                         min={0}
-                        placeholder={t("patientDetail.healthInfo.heightPlaceholder")}
+                        placeholder={t(
+                          "patientDetail.healthInfo.heightPlaceholder"
+                        )}
                       />
                     </div>
                     <div>
@@ -2136,7 +2419,9 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
                         onChange={handleEditChange}
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                         min={0}
-                        placeholder={t("patientDetail.healthInfo.weightPlaceholder")}
+                        placeholder={t(
+                          "patientDetail.healthInfo.weightPlaceholder"
+                        )}
                       />
                     </div>
                   </div>
@@ -2151,7 +2436,9 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
                       onChange={handleEditChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 outline-0"
                     >
-                      <option value="">{t("patientDetail.healthInfo.selectBloodType")}</option>
+                      <option value="">
+                        {t("patientDetail.healthInfo.selectBloodType")}
+                      </option>
                       <option value="O+">O+</option>
                       <option value="O-">O-</option>
                       <option value="A+">A+</option>
@@ -2173,7 +2460,7 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
                     onClick={() => setShowEditModal(false)}
                     disabled={loading}
                   >
-                    {t('common.cancel')}
+                    {t("common.cancel")}
                   </button>
                   <button
                     type="submit"
@@ -2181,7 +2468,7 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
                     className="px-4 py-2.5 text-sm font-medium text-white bg-base-600 rounded-lg hover:bg-base-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={loading}
                   >
-                    {loading ? t('common.saving') : t("common.saveChanges")}
+                    {loading ? t("common.saving") : t("common.saveChanges")}
                   </button>
                 </div>
               </div>
@@ -2193,14 +2480,16 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
       {errorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-red-600">{t('common.error')}</h2>
+            <h2 className="text-lg font-semibold mb-4 text-red-600">
+              {t("common.error")}
+            </h2>
             <p>{errorModal}</p>
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setErrorModal(null)}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
               >
-                {t('common.close')}
+                {t("common.close")}
               </button>
             </div>
           </div>
@@ -2209,7 +2498,6 @@ export function HealthInfoContent({ patient }: { patient: Patient }) {
     </div>
   );
 }
-
 
 export function AppointmentEditModal({
   appointment,
@@ -2385,14 +2673,14 @@ export function AppointmentEditModal({
                   className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                   disabled={loading}
                 >
-                  {t('common.cancel')}
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700"
                   disabled={loading}
                 >
-                  {loading ? t('common.saving') : t('common.save')}
+                  {loading ? t("common.saving") : t("common.save")}
                 </button>
               </div>
             </div>
@@ -2402,14 +2690,16 @@ export function AppointmentEditModal({
       {errorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-red-600">{t('common.error')}</h2>
+            <h2 className="text-lg font-semibold mb-4 text-red-600">
+              {t("common.error")}
+            </h2>
             <p>{errorModal}</p>
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setErrorModal(null)}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
               >
-                {t('common.close')}
+                {t("common.close")}
               </button>
             </div>
           </div>
@@ -2443,10 +2733,16 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
 
   // Filter, sort, and search state for emergency contacts
   const [contactSearchTerm, setContactSearchTerm] = useState("");
-  const [contactSortBy, setContactSortBy] = useState<"name" | "phone" | "relationship">("name");
-  const [contactSortOrder, setContactSortOrder] = useState<"asc" | "desc">("asc");
+  const [contactSortBy, setContactSortBy] = useState<
+    "name" | "phone" | "relationship"
+  >("name");
+  const [contactSortOrder, setContactSortOrder] = useState<"asc" | "desc">(
+    "asc"
+  );
   const [relationshipFilter, setRelationshipFilter] = useState<string>("");
-  const [filteredContacts, setFilteredContacts] = useState<EmergencyContact[]>([]);
+  const [filteredContacts, setFilteredContacts] = useState<EmergencyContact[]>(
+    []
+  );
 
   const reloadContacts = async () => {
     if (!patientId) return;
@@ -2460,10 +2756,9 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
       }));
       setContacts(mapped);
     } catch (error) {
-      setErrorModal(t('patientDetail.contacts.error.load'));
+      setErrorModal(t("patientDetail.contacts.error.load"));
     }
   };
-
 
   // Apply filters and sort for emergency contacts
   const applyContactFiltersAndSort = () => {
@@ -2471,15 +2766,22 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
 
     // Search filter
     if (contactSearchTerm.trim()) {
-      filtered = filtered.filter(contact =>
-        contact.contactName?.toLowerCase().includes(contactSearchTerm.toLowerCase()) ||
-        contact.contactPhone?.toLowerCase().includes(contactSearchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (contact) =>
+          contact.contactName
+            ?.toLowerCase()
+            .includes(contactSearchTerm.toLowerCase()) ||
+          contact.contactPhone
+            ?.toLowerCase()
+            .includes(contactSearchTerm.toLowerCase())
       );
     }
 
     // Relationship filter
     if (relationshipFilter) {
-      filtered = filtered.filter(contact => contact.relationship === relationshipFilter);
+      filtered = filtered.filter(
+        (contact) => contact.relationship === relationshipFilter
+      );
     }
 
     // Sort
@@ -2488,7 +2790,9 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
       if (contactSortBy === "name") {
         compareValue = (a.contactName || "").localeCompare(b.contactName || "");
       } else if (contactSortBy === "phone") {
-        compareValue = (a.contactPhone || "").localeCompare(b.contactPhone || "");
+        compareValue = (a.contactPhone || "").localeCompare(
+          b.contactPhone || ""
+        );
       } else if (contactSortBy === "relationship") {
         compareValue = a.relationship.localeCompare(b.relationship);
       }
@@ -2502,7 +2806,13 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
   // Apply filters whenever contacts or filter criteria change
   useEffect(() => {
     applyContactFiltersAndSort();
-  }, [contacts, contactSearchTerm, contactSortBy, contactSortOrder, relationshipFilter]);
+  }, [
+    contacts,
+    contactSearchTerm,
+    contactSortBy,
+    contactSortOrder,
+    relationshipFilter,
+  ]);
 
   useEffect(() => {
     // Use emergency contacts from patient data first, then fallback to API call if needed
@@ -2547,7 +2857,10 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
 
       if (editContact.contactId === 0) {
         // ➡️ Trường hợp thêm mới
-        const created = await patientService.addEmergencyContact(Number(patientId), editData);
+        const created = await patientService.addEmergencyContact(
+          Number(patientId),
+          editData
+        );
         const newContact = {
           contactId: created.id,
           contactName: created.contact_name,
@@ -2555,7 +2868,6 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
           relationship: created.relationship,
         };
         setContacts((prev) => [...prev, newContact]);
-
       } else {
         // ➡️ Trường hợp cập nhật
         const updated = await patientService.updateEmergencyContact(
@@ -2642,7 +2954,7 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
   return (
     <div className="bg-white py-6 px-4 rounded-lg border border-gray-200">
       <h2 className="text-xl font-semibold mb-4 ml-1 flex justify-between items-center">
-        {t('patientDetail.contacts.title')}
+        {t("patientDetail.contacts.title")}
         <button
           onClick={() =>
             setEditContact({
@@ -2654,7 +2966,7 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
           }
           className="ml-4 px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 transition-colors"
         >
-          {t('common.addNew')}
+          {t("common.addNew")}
         </button>
       </h2>
 
@@ -2664,7 +2976,7 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
         <div className="flex-1 min-w-[200px]">
           <input
             type="text"
-            placeholder={t('patientDetail.contacts.searchPlaceholder')}
+            placeholder={t("patientDetail.contacts.searchPlaceholder")}
             value={contactSearchTerm}
             onChange={(e) => setContactSearchTerm(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -2678,10 +2990,18 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
             onChange={(e) => setRelationshipFilter(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">{t("patientDetail.contacts.filters.allRelationships")}</option>
-            <option value="FAMILY">{t("patientDetail.contacts.relationship.family")}</option>
-            <option value="FRIEND">{t("patientDetail.contacts.relationship.friend")}</option>
-            <option value="OTHERS">{t("patientDetail.contacts.relationship.others")}</option>
+            <option value="">
+              {t("patientDetail.contacts.filters.allRelationships")}
+            </option>
+            <option value="FAMILY">
+              {t("patientDetail.contacts.relationship.family")}
+            </option>
+            <option value="FRIEND">
+              {t("patientDetail.contacts.relationship.friend")}
+            </option>
+            <option value="OTHERS">
+              {t("patientDetail.contacts.relationship.others")}
+            </option>
           </select>
         </div>
 
@@ -2689,12 +3009,22 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
         <div className="min-w-[120px]">
           <select
             value={contactSortBy}
-            onChange={(e) => setContactSortBy(e.target.value as "name" | "phone" | "relationship")}
+            onChange={(e) =>
+              setContactSortBy(
+                e.target.value as "name" | "phone" | "relationship"
+              )
+            }
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="name">{t("patientDetail.contacts.sortBy.name")}</option>
-            <option value="phone">{t("patientDetail.contacts.sortBy.phone")}</option>
-            <option value="relationship">{t("patientDetail.contacts.sortBy.relationship")}</option>
+            <option value="name">
+              {t("patientDetail.contacts.sortBy.name")}
+            </option>
+            <option value="phone">
+              {t("patientDetail.contacts.sortBy.phone")}
+            </option>
+            <option value="relationship">
+              {t("patientDetail.contacts.sortBy.relationship")}
+            </option>
           </select>
         </div>
 
@@ -2702,19 +3032,21 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
         <div className="flex gap-2">
           <button
             onClick={() => setContactSortOrder("asc")}
-            className={`px-3 py-2 text-sm rounded-md transition-colors ${contactSortOrder === "asc"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+            className={`px-3 py-2 text-sm rounded-md transition-colors ${
+              contactSortOrder === "asc"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
           >
             {t("common.ascending")}
           </button>
           <button
             onClick={() => setContactSortOrder("desc")}
-            className={`px-3 py-2 text-sm rounded-md transition-colors ${contactSortOrder === "desc"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+            className={`px-3 py-2 text-sm rounded-md transition-colors ${
+              contactSortOrder === "desc"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
           >
             {t("common.descending")}
           </button>
@@ -2763,9 +3095,13 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
             {filteredContacts && filteredContacts.length > 0 ? (
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {(() => {
-                  const startIndex = (contactCurrentPage - 1) * contactItemsPerPage;
+                  const startIndex =
+                    (contactCurrentPage - 1) * contactItemsPerPage;
                   const endIndex = startIndex + contactItemsPerPage;
-                  const paginatedContacts = filteredContacts.slice(startIndex, endIndex);
+                  const paginatedContacts = filteredContacts.slice(
+                    startIndex,
+                    endIndex
+                  );
 
                   return paginatedContacts.map((contact) => (
                     <TableRow key={contact.contactId}>
@@ -2776,29 +3112,13 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
                         {contact.contactPhone}
                       </TableCell>
                       <TableCell className="px-4 py-3 text-gray-700 text-theme-sm dark:text-gray-400">
-                        {t(`patientDetail.contacts.relationship.${contact.relationship.toLowerCase()}`, { defaultValue: t("common.notAvailable") })}
+                        {t(
+                          `patientDetail.contacts.relationship.${contact.relationship.toLowerCase()}`,
+                          { defaultValue: t("common.notAvailable") }
+                        )}
                       </TableCell>
                       <TableCell className="px-3 py-3 text-theme-sm">
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleView(contact)}
-                            className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-sky-700 bg-sky-100 rounded-md hover:bg-blue-200 transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                              <path
-                                fillRule="evenodd"
-                                d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            {t("common.view")}
-                          </button>
                           <button
                             onClick={() => handleEdit(contact)}
                             className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 transition-colors"
@@ -2846,7 +3166,7 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
                   >
                     {contactSearchTerm || relationshipFilter
                       ? t("patientDetail.contacts.emptyFilter")
-                      : t('patientDetail.contacts.empty')}
+                      : t("patientDetail.contacts.empty")}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -2869,25 +3189,33 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
       {selectedContact && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">{t("patientDetail.contacts.detailTitle")}</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {t("patientDetail.contacts.detailTitle")}
+            </h2>
             <div className="space-y-2">
               <div>
-                <span className="font-medium">{t("patientDetail.contacts.table.name")}:</span>{" "}
+                <span className="font-medium">
+                  {t("patientDetail.contacts.table.name")}:
+                </span>{" "}
                 {selectedContact.contactName}
               </div>
               <div>
-                <span className="font-medium">{t("patientDetail.contacts.table.phone")}:</span>{" "}
+                <span className="font-medium">
+                  {t("patientDetail.contacts.table.phone")}:
+                </span>{" "}
                 {selectedContact.contactPhone}
               </div>
               <div>
-                <span className="font-medium">{t("patientDetail.contacts.table.relationship")}:</span>{" "}
+                <span className="font-medium">
+                  {t("patientDetail.contacts.table.relationship")}:
+                </span>{" "}
                 {selectedContact.relationship === "FAMILY"
                   ? t("patientDetail.contacts.relationship.family")
                   : selectedContact.relationship === "FRIEND"
-                    ? t("patientDetail.contacts.relationship.friend")
-                    : selectedContact.relationship === "OTHERS"
-                      ? t("patientDetail.contacts.relationship.others")
-                      : "Chưa xác định"}
+                  ? t("patientDetail.contacts.relationship.friend")
+                  : selectedContact.relationship === "OTHERS"
+                  ? t("patientDetail.contacts.relationship.others")
+                  : "Chưa xác định"}
               </div>
             </div>
             <div className="flex justify-end mt-6">
@@ -2895,7 +3223,7 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
                 onClick={() => setSelectedContact(null)}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
               >
-                {t('common.close')}
+                {t("common.close")}
               </button>
             </div>
           </div>
@@ -2905,7 +3233,9 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
       {editContact && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">{t("patientDetail.contacts.editTitle")}</h2>
+            <h2 className="text-lg font-semibold mb-4">
+              {t("patientDetail.contacts.editTitle")}
+            </h2>
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
                 <label className="block font-medium mb-1">
@@ -2922,7 +3252,9 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
                 />
               </div>
               <div>
-                <label className="block font-medium mb-1">{t("patientDetail.contacts.table.phone")}</label>
+                <label className="block font-medium mb-1">
+                  {t("patientDetail.contacts.table.phone")}
+                </label>
                 <input
                   name="contactPhone"
                   value={editData.contactPhone || ""}
@@ -2934,7 +3266,9 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
                 />
               </div>
               <div>
-                <label className="block font-medium mb-1">{t("patientDetail.contacts.table.relationship")}</label>
+                <label className="block font-medium mb-1">
+                  {t("patientDetail.contacts.table.relationship")}
+                </label>
                 <select
                   name="relationship"
                   value={editData.relationship || ""}
@@ -2948,10 +3282,18 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
                   className="w-full border rounded px-3 py-2"
                   required
                 >
-                  <option value="">{t("patientDetail.contacts.selectRelationship")}</option>
-                  <option value="FAMILY">{t("patientDetail.contacts.relationship.family")}</option>
-                  <option value="FRIEND">{t("patientDetail.contacts.relationship.friend")}</option>
-                  <option value="OTHERS">{t("patientDetail.contacts.relationship.others")}</option>
+                  <option value="">
+                    {t("patientDetail.contacts.selectRelationship")}
+                  </option>
+                  <option value="FAMILY">
+                    {t("patientDetail.contacts.relationship.family")}
+                  </option>
+                  <option value="FRIEND">
+                    {t("patientDetail.contacts.relationship.friend")}
+                  </option>
+                  <option value="OTHERS">
+                    {t("patientDetail.contacts.relationship.others")}
+                  </option>
                 </select>
               </div>
               <div className="flex justify-end gap-2 mt-4">
@@ -2961,14 +3303,14 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
                   className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
                   disabled={loading}
                 >
-                  {t('common.cancel')}
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-base-600 text-white rounded-lg hover:bg-base-700"
                   disabled={loading}
                 >
-                  {loading ? t('common.saving') : t('common.save')}
+                  {loading ? t("common.saving") : t("common.save")}
                 </button>
               </div>
             </form>
@@ -2980,10 +3322,12 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
         isOpen={!!deleteContact}
         onClose={() => setDeleteContact(null)}
         onConfirm={handleDelete}
-        title={t('patientDetail.contacts.deleteConfirm.title')}
+        title={t("patientDetail.contacts.deleteConfirm.title")}
         message={
           deleteContact
-            ? t("patientDetail.contacts.deleteConfirm.message", { name: deleteContact.contactName })
+            ? t("patientDetail.contacts.deleteConfirm.message", {
+                name: deleteContact.contactName,
+              })
             : ""
         }
       />
@@ -2991,14 +3335,16 @@ export function ContactInfoContent({ patient }: { patient: Patient }) {
       {errorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-red-600">{t('common.error')}</h2>
+            <h2 className="text-lg font-semibold mb-4 text-red-600">
+              {t("common.error")}
+            </h2>
             <p>{errorModal}</p>
             <div className="flex justify-end mt-6">
               <button
                 onClick={() => setErrorModal(null)}
                 className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
               >
-                {t('common.close')}
+                {t("common.close")}
               </button>
             </div>
           </div>
