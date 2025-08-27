@@ -36,6 +36,7 @@ import {
 import type { ServiceOrder } from "../../types/serviceOrder"
 import { getServiceOrderById, updateServiceOrder, deleteServiceOrder } from "../../services/serviceOrderService"
 import type { Appointment } from "../../types/appointment"
+import { useTranslation } from "react-i18next"
 import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
 dayjs.extend(utc)
@@ -55,6 +56,7 @@ interface AppointmentNote {
 }
 
 const PatientDetail: React.FC = () => {
+    const { t } = useTranslation()
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [deleting, setDeleting] = useState(false)
