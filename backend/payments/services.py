@@ -340,7 +340,6 @@ class TransactionService:
     def get_transactions_by_bill_id(self, bill_id, sort_by='transaction_date', sort_order='desc'):
         try:
             if not Bill.objects.filter(id=bill_id).exists():
-                logger.error(f"Bill not found for bill_id={bill_id}")
                 raise Http404(_("Không tìm thấy hóa đơn"))
             
             valid_sort_fields = ['transaction_date', 'amount', 'status', 'created_at', 'updated_at']
