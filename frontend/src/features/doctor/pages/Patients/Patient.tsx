@@ -1,8 +1,20 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Table, Input, DatePicker, Button, Avatar, Space, Card, Select, Tooltip, Empty, Tag } from "antd"
+import type React from "react";
+import { useState } from "react";
+import {
+    Table,
+    Input,
+    DatePicker,
+    Button,
+    Avatar,
+    Space,
+    Card,
+    Select,
+    Tooltip,
+    Empty,
+    Tag,
+} from "antd";
 import {
     EditOutlined,
     SearchOutlined,
@@ -11,24 +23,20 @@ import {
     ClearOutlined,
     CalendarOutlined,
     ClockCircleOutlined,
-    EnvironmentOutlined,
     UserOutlined,
-} from "@ant-design/icons"
-import { useNavigate } from "react-router-dom"
-import { useAppointmentContext } from "../../context/AppointmentContext"
-import { useTranslation } from "react-i18next"
-import { getAppointmentStatusColor } from "../../services/appointmentService"
-import type { Appointment } from "../../types/appointment"
-import dayjs, { type Dayjs } from "dayjs"
-
-const { Search } = Input
-const { Option } = Select
-
+} from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { useAppointmentContext } from "../../context/AppointmentContext";
+import { useTranslation } from "react-i18next";
+import { getAppointmentStatusColor } from "../../services/appointmentService";
+import type { Appointment } from "../../types/appointment";
+import dayjs, { type Dayjs } from "dayjs";
+const { Search } = Input;
+const { Option } = Select;
 const Patient: React.FC = () => {
-    const { t } = useTranslation()
-    const [localSearch, setLocalSearch] = useState("")
-    const navigate = useNavigate()
-
+    const { t } = useTranslation();
+    const [localSearch, setLocalSearch] = useState("");
+    const navigate = useNavigate();
     const {
         appointments,
         paginatedData,
@@ -41,60 +49,48 @@ const Patient: React.FC = () => {
         clearDateFilter,
         setTodayFilter,
         refreshAppointments,
-    } = useAppointmentContext()
-
-    // Handle viewing patient details
+    } = useAppointmentContext();
     const handleViewPatient = (id: number) => {
-        navigate(`/doctor/examination/patient/detail`, { state: { appointmentId: id } })
-    }
-
-    // Handle refresh action
+        navigate(`/doctor/examination/patient/detail`, {
+            state: { appointmentId: id },
+        });
+    };
     const handleRefresh = () => {
-        refreshAppointments()
-    }
-
-    // Handle date filter change
-    const handleDateChange = (date: Dayjs | null, dateString: string | string[]) => {
+        refreshAppointments();
+    };
+    const handleDateChange = (
+        date: Dayjs | null,
+        dateString: string | string[]
+    ) => {
         if (date) {
-            const isoDate = date.format("YYYY-MM-DD")
-            console.log("Updating date filter:", isoDate)
-            updateFilters({ work_date: isoDate })
+            const isoDate = date.format("YYYY-MM-DD");
+            console.log("Updating date filter:", isoDate);
+            updateFilters({ work_date: isoDate });
         } else {
-            console.log("Clearing date filter")
-            updateFilters({ work_date: undefined })
+            console.log("Clearing date filter");
+            updateFilters({ work_date: undefined });
         }
-    }
+    };
 
-    // Handle shift filter change
     const handleShiftFilterChange = (value: string) => {
-        console.log("Updating shift filter:", value)
-        updateFilters({ shift: value === "all" ? undefined : value })
-    }
+        console.log("Updating shift filter:", value);
+        updateFilters({ shift: value === "all" ? undefined : value });
+    };
 
-    // Handle status filter change
     const handleStatusFilterChange = (value: string) => {
-        console.log("Updating status filter:", value)
-        updateFilters({ appointmentStatus: value === "all" ? undefined : value })
-    }
-
-    // Handle local search change
+        console.log("Updating status filter:", value);
+        updateFilters({ appointmentStatus: value === "all" ? undefined : value });
+    };
     const handleLocalSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setLocalSearch(e.target.value)
-    }
-
-    // Handle clearing all filters
+        setLocalSearch(e.target.value);
+    };
     const handleClearFilters = () => {
-        // Clear date
-        clearDateFilter()
-        // Reset shift and status to 'all' by unsetting their values
-        updateFilters({ shift: undefined, appointmentStatus: undefined })
-        // Clear local search input
-        setLocalSearch("")
-    }
-
-    // Get status badge with color
+        clearDateFilter();
+        updateFilters({ shift: undefined, appointmentStatus: undefined });
+        setLocalSearch("");
+    };
     const getStatusBadge = (appointmentStatus: string) => {
-        const { color, bgColor } = getAppointmentStatusColor(appointmentStatus)
+        const { color, bgColor } = getAppointmentStatusColor(appointmentStatus);
         return (
             <Tag
                 color={color}
@@ -109,50 +105,46 @@ const Patient: React.FC = () => {
             >
                 {t(`status.${appointmentStatus.toLowerCase()}`)}
             </Tag>
-        )
-    }
-
-    // Get shift label using translation
+        );
+    };
     const getShiftLabel = (shift: string) => {
         const shiftLabels = {
             M: t("shifts.morning"),
             A: t("shifts.afternoon"),
             E: t("shifts.evening"),
             N: t("shifts.night"),
-        }
-        return shiftLabels[shift as keyof typeof shiftLabels] || shift
-    }
-
-    // Filter appointments based on local search
+        };
+        return shiftLabels[shift as keyof typeof shiftLabels] || shift;
+    };
     const filteredAppointments = appointments.filter((appointment) => {
-        if (!localSearch) return true
-        const searchLower = localSearch.toLowerCase()
+        if (!localSearch) return true;
+        const searchLower = localSearch.toLowerCase();
         return (
-            appointment.patientInfo?.first_name?.toLowerCase().includes(searchLower) ||
+            appointment.patientInfo?.first_name
+                ?.toLowerCase()
+                .includes(searchLower) ||
             appointment.patientInfo?.last_name?.toLowerCase().includes(searchLower) ||
             appointment.patientInfo?.phoneNumber?.includes(searchLower) ||
             appointment.patientInfo?.id?.toString().includes(searchLower)
-        )
-    })
-
-    // Sort appointments by status
-    const statusOrder = ["C", "P", "D", "X"]
+        );
+    });
+    const statusOrder = ["C", "P", "D", "X"];
     const sortedAppointments = [...filteredAppointments].sort((a, b) => {
-        const aIndex = statusOrder.indexOf(a.status)
-        const bIndex = statusOrder.indexOf(b.status)
-        return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex)
-    })
-
-    // Define table columns
+        const aIndex = statusOrder.indexOf(a.status);
+        const bIndex = statusOrder.indexOf(b.status);
+        return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+    });
     const columns = [
         {
             title: t("table.no"),
             dataIndex: "number",
             key: "number",
             width: 70,
-            render: (number: number) => <span style={{ fontWeight: 500, color: "#6b7280" }}>
-                {number !== undefined ? number : "-"}
-            </span>
+            render: (number: number) => (
+                <span style={{ fontWeight: 500, color: "#6b7280" }}>
+                    {number !== undefined ? number : "-"}
+                </span>
+            ),
         },
         {
             title: t("table.patient"),
@@ -170,12 +162,17 @@ const Patient: React.FC = () => {
                         icon={<UserOutlined />}
                     />
                     <div>
-                        <div style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}>
+                        <div
+                            style={{ fontWeight: 600, color: "#111827", marginBottom: "2px" }}
+                        >
                             {patientInfo
-                                ? `${patientInfo.first_name || ""} ${patientInfo.last_name || ""}`.trim() || t("table.noInformation")
+                                ? `${patientInfo.first_name || ""} ${patientInfo.last_name || ""
+                                    }`.trim() || t("table.noInformation")
                                 : t("table.noInformation")}
                         </div>
-                        <div style={{ fontSize: "12px", color: "#6b7280" }}>{patientInfo?.phone || "N/A"}</div>
+                        <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                            {patientInfo?.phone || "N/A"}
+                        </div>
                     </div>
                 </div>
             ),
@@ -186,10 +183,17 @@ const Patient: React.FC = () => {
             key: "schedule",
             render: (schedule: any) => (
                 <div>
-                    <div style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            marginBottom: "4px",
+                        }}
+                    >
                         <CalendarOutlined style={{ marginRight: 8, color: "#6b7280" }} />
                         <span style={{ color: "#374151" }}>
-                            {schedule?.work_date && dayjs(schedule.work_date, "YYYY-MM-DD").format("DD/MM/YYYY")}
+                            {schedule?.work_date &&
+                                dayjs(schedule.work_date, "YYYY-MM-DD").format("DD/MM/YYYY")}
                         </span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center" }}>
@@ -206,12 +210,20 @@ const Patient: React.FC = () => {
             dataIndex: "schedule",
             key: "schedule",
             render: (schedule: any) => (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                    }}
+                >
                     <span style={{ color: "#374151" }}>
                         {t("table.room")} {schedule?.room || t("table.notAssigned")}
                     </span>
                     <span style={{ color: "#374151" }}>
-                        {`${t("table.building")} ${schedule?.building || ""} - ${t("table.floor")} ${schedule?.floor || ""}` || t("table.notAssigned")}
+                        {`${t("table.building")} ${schedule?.building || ""} - ${t(
+                            "table.floor"
+                        )} ${schedule?.floor || ""}` || t("table.notAssigned")}
                     </span>
                 </div>
             ),
@@ -223,7 +235,9 @@ const Patient: React.FC = () => {
             ellipsis: true,
             render: (symptoms: string) => (
                 <Tooltip title={symptoms}>
-                    <span style={{ color: "#374151" }}>{symptoms || t("table.none")}</span>
+                    <span style={{ color: "#374151" }}>
+                        {symptoms || t("table.none")}
+                    </span>
                 </Tooltip>
             ),
         },
@@ -251,11 +265,11 @@ const Patient: React.FC = () => {
                 </Space>
             ),
         },
-    ]
+    ];
 
     return (
-        <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
-            <div style={{ padding: "24px" }}>
+        <div style={{ minHeight: "100vh" }}>
+            <div style={{}}>
                 {/* Header */}
                 <div style={{ marginBottom: "24px" }}>
                     <h1
@@ -273,15 +287,17 @@ const Patient: React.FC = () => {
                         {t("header.manageAndTrack")}
                         {filters.work_date && (
                             <span style={{ marginLeft: "8px", fontWeight: 500 }}>
-                                - {t("header.date")}: {dayjs(filters.work_date, "YYYY-MM-DD").format("DD/MM/YYYY")}
+                                - {t("header.date")}:{" "}
+                                {dayjs(filters.work_date, "YYYY-MM-DD").format("DD/MM/YYYY")}
                             </span>
                         )}
                         {filters.shift && (
-                            <span style={{ marginLeft: "8px", fontWeight: 500 }}>- {t("header.shift")}: {getShiftLabel(filters.shift)}</span>
+                            <span style={{ marginLeft: "8px", fontWeight: 500 }}>
+                                - {t("header.shift")}: {getShiftLabel(filters.shift)}
+                            </span>
                         )}
                     </p>
                 </div>
-
                 {/* Stats Cards */}
                 <div
                     style={{
@@ -292,23 +308,40 @@ const Patient: React.FC = () => {
                     }}
                 >
                     <Card size="small" style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "#111827" }}>{stats.total}</div>
-                        <div style={{ color: "#6b7280" }}>{t("stats.totalAppointments")}</div>
+                        <div
+                            style={{ fontSize: "24px", fontWeight: "bold", color: "#111827" }}
+                        >
+                            {stats.total}
+                        </div>
+                        <div style={{ color: "#6b7280" }}>
+                            {t("stats.totalAppointments")}
+                        </div>
                     </Card>
                     <Card size="small" style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}>{stats.pending}</div>
+                        <div
+                            style={{ fontSize: "24px", fontWeight: "bold", color: "#d97706" }}
+                        >
+                            {stats.pending}
+                        </div>
                         <div style={{ color: "#6b7280" }}>{t("stats.pending")}</div>
                     </Card>
                     <Card size="small" style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "#2563eb" }}>{stats.confirmed}</div>
+                        <div
+                            style={{ fontSize: "24px", fontWeight: "bold", color: "#2563eb" }}
+                        >
+                            {stats.confirmed}
+                        </div>
                         <div style={{ color: "#6b7280" }}>{t("stats.confirmed")}</div>
                     </Card>
                     <Card size="small" style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}>{stats.completed}</div>
+                        <div
+                            style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}
+                        >
+                            {stats.completed}
+                        </div>
                         <div style={{ color: "#6b7280" }}>{t("stats.completed")}</div>
                     </Card>
                 </div>
-
                 {/* Filters */}
                 <Card
                     bordered={false}
@@ -318,7 +351,14 @@ const Patient: React.FC = () => {
                         boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
                     }}
                 >
-                    <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
+                    <div
+                        style={{
+                            display: "flex",
+                            gap: "16px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                        }}
+                    >
                         <Search
                             placeholder={t("placeholders.searchPatient")}
                             value={localSearch}
@@ -329,7 +369,11 @@ const Patient: React.FC = () => {
                         <DatePicker
                             placeholder={t("placeholders.selectWorkingDate")}
                             style={{ width: 200 }}
-                            value={filters.work_date ? dayjs(filters.work_date, "YYYY-MM-DD") : null}
+                            value={
+                                filters.work_date
+                                    ? dayjs(filters.work_date, "YYYY-MM-DD")
+                                    : null
+                            }
                             onChange={handleDateChange}
                             format="DD/MM/YYYY"
                             allowClear
@@ -360,7 +404,11 @@ const Patient: React.FC = () => {
                             <Option value="D">{t("status.completed")}</Option>
                             <Option value="X">{t("status.cancelled")}</Option>
                         </Select>
-                        <Button icon={<ClearOutlined />} onClick={handleClearFilters} type="text">
+                        <Button
+                            icon={<ClearOutlined />}
+                            onClick={handleClearFilters}
+                            type="text"
+                        >
                             {t("buttons.clearFilters")}
                         </Button>
                         <Button onClick={setTodayFilter} type="text">
@@ -376,7 +424,6 @@ const Patient: React.FC = () => {
                         </Button>
                     </div>
                 </Card>
-
                 {/* Patient Table */}
                 <Card
                     bordered={false}
@@ -419,7 +466,6 @@ const Patient: React.FC = () => {
                             </span>
                         </div>
                     </div>
-
                     {loading ? (
                         <div style={{ textAlign: "center", padding: "60px 0" }}>
                             <Empty description={t("empty.loading")} />
@@ -443,18 +489,24 @@ const Patient: React.FC = () => {
                                 total: paginatedData.totalElements,
                                 showSizeChanger: true,
                                 pageSizeOptions: ["10", "20", "50"],
-                                showTotal: (total, range) => t("pagination.showing", { start: range[0], end: range[1], total }),
+                                showTotal: (total, range) =>
+                                    t("pagination.showing", {
+                                        start: range[0],
+                                        end: range[1],
+                                        total,
+                                    }),
                                 onChange: (page, pageSize) => updatePagination(page, pageSize),
                                 style: { marginTop: "16px" },
                             }}
                             style={{ borderRadius: "12px" }}
-                            rowClassName={(record, index) => (index % 2 === 0 ? "table-row-light" : "table-row-dark")}
+                            rowClassName={(record, index) =>
+                                index % 2 === 0 ? "table-row-light" : "table-row-dark"
+                            }
                         />
                     )}
                 </Card>
             </div>
         </div>
-    )
-}
-
-export default Patient
+    );
+};
+export default Patient;
