@@ -146,6 +146,10 @@ const AppSidebar: React.FC = () => {
     (path: string) => {
       const currentPath = location.pathname;
 
+      if (currentPath === basePath && path === `${basePath}/patients`) {
+      return true;
+    }
+
       if (path.endsWith("/dashboard")) {
         return currentPath === path || currentPath === basePath;
       }
