@@ -111,7 +111,6 @@ class PharmacyServiceTest(TestCase):
         )
 
     def test_create_prescription(self):
-        # create a fresh appointment
         new_appointment = Appointment.objects.create(
             doctor=self.doctor,
             patient=self.patient,
@@ -121,7 +120,6 @@ class PharmacyServiceTest(TestCase):
             slot_end=time(9, 0),
             status=AppointmentStatus.CONFIRMED.value
         )
-
         data = {
             'appointment_id': new_appointment.id,  # use the new appointment
             'patient_id': self.patient.id,

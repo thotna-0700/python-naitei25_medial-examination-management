@@ -232,7 +232,6 @@ class PrescriptionSerializerTest(TestCase):
             slot_end=time(9, 0),
             status="CONFIRMED"
         )
-
         data = {
             'appointment': new_appointment.id,
             'patient': self.patient.id,

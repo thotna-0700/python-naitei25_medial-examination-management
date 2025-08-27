@@ -430,4 +430,22 @@ export const appointmentService = {
       throw new Error("Không thể tải các slot thời gian có sẵn");
     }
   },
+  async getAppointmentsByDoctorId(
+    doctorId: number,
+    pageNo = 1,
+    pageSize = 50
+  ): Promise<any[]> {
+    try {
+      const response = await api.get(
+        `/appointments/doctor/${doctorId}/?pageNo=${pageNo}&pageSize=${pageSize}`
+      );
+      return response.data.content || [];
+    } catch (error) {
+      console.error(
+        `Error fetching appointments for doctor ${doctorId}:`,
+        error
+      );
+      throw new Error("Không thể tải lịch khám của bác sĩ");
+    }
+  },
 };

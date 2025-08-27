@@ -256,7 +256,8 @@
     "sort": "Sort",
     "sortAZ": "Name A → Z",
     "sortZA": "Name Z → A",
-    "pageInfo": "Showing {{end}} of {{total}} departments"
+    "pageInfo": "Showing {{end}} of {{total}} departments",
+    "addDoctor": "+ Add doctor"
   },
   "navigation": {
     "home": "Home",

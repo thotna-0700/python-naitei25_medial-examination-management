@@ -469,6 +469,20 @@ class DepartmentViewSet(viewsets.ViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['post'], url_path="add_doctor")
+    def add_doctor(self, request, pk=None):
+        doctor_id = request.data.get("doctor_id")
+        if not doctor_id:
+            return Response({"error": "doctor_id là bắt buộc"}, status=400)
+
+        doctor = DepartmentService().add_doctor_to_department(pk, doctor_id)
+        return Response(DoctorSerializer(doctor).data)
+
+    @action(detail=True, methods=['delete'], url_path='remove_doctor/(?P<doctor_id>\d+)')
+    def remove_doctor(self, request, pk=None, doctor_id=None):
+        doctor = DepartmentService().remove_doctor_from_department(pk, doctor_id)
+        return Response({"message": f"Đã xoá bác sĩ {doctor.id} khỏi khoa {pk}"})
+
 class ExaminationRoomViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 

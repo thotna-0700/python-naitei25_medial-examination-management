@@ -110,6 +110,50 @@ class DoctorViewSetTest(APITestCase):
         serializer = DoctorSerializer(doctors, many=True)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
+        
+    def test_get_permissions_list(self):
+        """Ensure list action allows any user"""
+        response = self.client.get(reverse('doctor-list'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_permissions_non_list_requires_auth(self):
+        """Ensure non-listed actions require authentication"""
+        response = self.client.post(reverse('doctor-list'), {})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_object_not_found(self):
+        """Doctor not found should raise 404"""
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(reverse('doctor-detail', kwargs={'pk': 999}))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_destroy_doctor_authenticated(self):
+        """Deleting a doctor should return 200"""
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(reverse('doctor-detail', kwargs={'pk': self.doctor.pk}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(Doctor.objects.filter(pk=self.doctor.pk).exists())
+
+    def test_search_doctor(self):
+        """Search doctor by identity number"""
+        url = reverse('doctor-search')
+        response = self.client.get(url, {'identityNumber': self.doctor.identity_number})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['identity_number'], self.doctor.identity_number)
+
+    def test_filter_doctor(self):
+        """Filter doctors by specialization"""
+        url = reverse('doctor-filter')
+        response = self.client.get(url, {'specialization': 'Cardiologist'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_get_doctor_by_user_id(self):
+        """Get doctor by user id"""
+        url = reverse('doctor-get-doctor-by-user-id', kwargs={'user_id': self.user.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], self.doctor.id)
 
 class DepartmentViewSetTest(APITestCase):
     @classmethod
@@ -129,6 +173,10 @@ class DepartmentViewSetTest(APITestCase):
         serializer = DepartmentSerializer(self.department)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serializer.data)
+        
+    def test_retrieve_non_existing_department(self):
+        response = self.client.get(reverse('department-detail', kwargs={'pk': 999}))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_department_authenticated(self):
         self.client.force_authenticate(user=self.user)

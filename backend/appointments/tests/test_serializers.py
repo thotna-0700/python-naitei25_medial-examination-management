@@ -623,7 +623,7 @@ class AppointmentSerializerTest(TestCase):
             'createdAt': self.appointment.created_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             'patientInfo': PatientSerializer(self.patient).data,
             'doctorInfo': DoctorSerializer(self.doctor).data,
-            'appointment_notes': [AppointmentNoteSerializer(self.note).data],
+            'appointment_notes': [AppointmentNoteSerializer(self.note).data],  
             'id': self.appointment.id,
             'doctor': self.doctor.id,
             'patient': self.patient.id,

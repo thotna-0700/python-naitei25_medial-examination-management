@@ -191,6 +191,19 @@ class DepartmentService:
             'serviceCount': service_count
         }
 
+    def add_doctor_to_department(self, department_id, doctor_id):
+        department = self.get_department_by_id(department_id)
+        doctor = get_object_or_404(Doctor, pk=doctor_id)
+        doctor.department = department
+        doctor.save()
+        return doctor
+
+    def remove_doctor_from_department(self, department_id, doctor_id):
+        doctor = get_object_or_404(Doctor, pk=doctor_id, department_id=department_id)
+        doctor.department = None
+        doctor.save()
+        return doctor
+
 class ExaminationRoomService:
     def get_all_examination_rooms(self):
         return ExaminationRoom.objects.all().order_by('building', 'floor', 'id')

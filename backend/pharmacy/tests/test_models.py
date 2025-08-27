@@ -148,8 +148,19 @@ class PrescriptionModelTest(TestCase):
         )
 
     def test_create_prescription(self):
+    # Create a new appointment for this test
+        new_appointment = Appointment.objects.create(
+            doctor=self.doctor,
+            patient=self.patient,
+            schedule=self.schedule,
+            symptoms="Headache",
+            slot_start=time(9, 0),  # Different time slot
+            slot_end=time(9, 30),
+            status="CONFIRMED"
+        )
+    
         prescription = Prescription.objects.create(
-            appointment=self.appointment,
+            appointment=new_appointment,  # Use the new appointment
             patient=self.patient,
             follow_up_date=date(2025, 9, 3),
             is_follow_up=False,
@@ -160,7 +171,7 @@ class PrescriptionModelTest(TestCase):
             blood_sugar=95,
             note="Antibiotics prescribed"
         )
-        self.assertEqual(prescription.appointment, self.appointment)
+        self.assertEqual(prescription.appointment, new_appointment)
         self.assertEqual(prescription.patient, self.patient)
         self.assertEqual(prescription.follow_up_date, date(2025, 9, 3))
         self.assertFalse(prescription.is_follow_up)

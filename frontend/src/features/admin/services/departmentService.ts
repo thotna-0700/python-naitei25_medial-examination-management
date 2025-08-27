@@ -67,4 +67,18 @@ export const departmentService = {
     );
     return response.data;
   },
+  
+  async addDoctorToDepartment(departmentId: number, doctorId: number): Promise<Doctor> {
+    const response = await api.post<Doctor>(`/departments/${departmentId}/add_doctor/`, {
+      doctor_id: doctorId,
+    });
+    return response.data;
+  },
+
+  async removeDoctorFromDepartment(departmentId: number, doctorId: number): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>(
+      `/departments/${departmentId}/remove_doctor/${doctorId}/`
+    );
+    return response.data;
+  },
 };

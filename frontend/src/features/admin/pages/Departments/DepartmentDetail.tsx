@@ -4,6 +4,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 import ReturnButton from "../../components/ui/button/ReturnButton";
 import { departmentService } from "../../services/departmentService";
+import { DoctorSelectModal } from "../../components/sections/doctor/DoctorSelectModal";
+import { scheduleService } from "../../services/scheduleService";
+import { Modal, Button } from "antd";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+dayjs.extend(isSameOrAfter);
 
 interface Doctor {
   doctorId: number;
@@ -50,9 +56,11 @@ const DepartmentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [warning, setWarning] = useState<{ open: boolean; date?: string }>({ open: false });
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [department, setDepartment] = useState<Department | null>(null);
+  const [isDoctorModalOpen, setDoctorModalOpen] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [stats, setStats] = useState<DepartmentStats>({
@@ -274,11 +282,11 @@ const DepartmentDetail: React.FC = () => {
                     <span>
                       {department.created_at
                         ? `${t("common.year")} ${new Date(
-                            department.created_at
-                          ).getFullYear()}`
+                          department.created_at
+                        ).getFullYear()}`
                         : department.foundedYear
-                        ? `${t("common.year")} ${department.foundedYear}`
-                        : t("common.notAvailable")}
+                          ? `${t("common.year")} ${department.foundedYear}`
+                          : t("common.notAvailable")}
                     </span>
                   </div>
                   <div className="flex">
@@ -391,9 +399,17 @@ const DepartmentDetail: React.FC = () => {
       case "doctors":
         return (
           <div className="bg-white p-5 rounded-lg shadow-sm">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">
-              {t("common.staffList")} ({doctors.length})
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-800">
+                {t("common.staffList")} ({doctors.length})
+              </h3>
+              <button
+                onClick={() => setDoctorModalOpen(true)}
+                className="text-white bg-base-600 hover:bg-base-700 outline-nonefont-medium rounded-lg text-sm px-4 py-2 focus:bg-base-800"
+              >
+                  {t("common.addDoctor")}  
+              </button>
+            </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -406,9 +422,6 @@ const DepartmentDetail: React.FC = () => {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {t("common.position")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("common.status")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       {t("common.actions")}
@@ -447,21 +460,8 @@ const DepartmentDetail: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {doctor.academicDegree}
+                          {doctor.academic_degree}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            doctor.isAvailable
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {doctor.isAvailable
-                            ? t("common.available")
-                            : t("common.unavailable")}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-2">
@@ -481,6 +481,41 @@ const DepartmentDetail: React.FC = () => {
                           >
                             {t("common.details")}
                           </button>
+                          <button
+                            className="text-red-600 hover:text-red-900"
+                            onClick={async () => {
+                              try {
+                                const today = dayjs().startOf("day");
+                                const schedules = await scheduleService.getSchedulesByDoctorId(doctor.id);
+
+                                const futureSchedules = schedules.filter((s: any) =>
+                                  dayjs(s.work_date).isSameOrAfter(today)
+                                );
+
+                                if (futureSchedules.length > 0) {
+                                  const nearest = futureSchedules.sort((a: any, b: any) =>
+                                    dayjs(a.work_date).diff(dayjs(b.work_date))
+                                  )[0];
+
+                                  setWarning({
+                                    open: true,
+                                    date: dayjs(nearest.work_date).format("DD/MM/YYYY"),
+                                  });
+                                  return;
+                                }
+
+                                if (window.confirm(`Xoá bác sĩ ${doctor.first_name} khỏi khoa này?`)) {
+                                  await departmentService.removeDoctorFromDepartment(Number(id), doctor.id);
+                                  const doctorsData = await departmentService.getDoctorsByDepartmentId(Number(id));
+                                  setDoctors(doctorsData);
+                                }
+                              } catch (err) {
+                                alert("Lỗi khi xoá bác sĩ: " + err);
+                              }
+                            }}
+                          >
+                            {t("common.delete")}
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -495,68 +530,6 @@ const DepartmentDetail: React.FC = () => {
                       </td>
                     </tr>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      case "services":
-        return (
-          <div className="bg-white p-5 rounded-lg shadow-sm">
-            <h3 className="text-lg font-medium text-gray-800 mb-4">
-              {t("common.medicalServices")} ({services.length})
-            </h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("common.serviceId")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("common.serviceName")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("common.duration")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("common.price")}
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t("common.insurance")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {services.map((service) => (
-                    <tr key={service.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {service.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {service.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {service.duration}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {service.price}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {service.insurance_covered ? (
-                          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                            {t("common.insuranceCovered")}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                            {t("common.noInsurance")}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
                 </tbody>
               </table>
             </div>
@@ -587,11 +560,10 @@ const DepartmentDetail: React.FC = () => {
             <li className="mr-2">
               <button
                 onClick={() => setActiveTab("overview")}
-                className={`inline-block py-3 px-4 text-sm font-medium ${
-                  activeTab === "overview"
-                    ? "border-b-2 border-base-600 text-base-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`inline-block py-3 px-4 text-sm font-medium ${activeTab === "overview"
+                  ? "border-b-2 border-base-600 text-base-600"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 Tổng quan
               </button>
@@ -599,32 +571,48 @@ const DepartmentDetail: React.FC = () => {
             <li className="mr-2">
               <button
                 onClick={() => setActiveTab("doctors")}
-                className={`inline-block py-3 px-4 text-sm font-medium ${
-                  activeTab === "doctors"
-                    ? "border-b-2 border-base-600 text-base-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`inline-block py-3 px-4 text-sm font-medium ${activeTab === "doctors"
+                  ? "border-b-2 border-base-600 text-base-600"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 Bác sĩ & Nhân viên
               </button>
             </li>
-            <li className="mr-2">
-              <button
-                onClick={() => setActiveTab("services")}
-                className={`inline-block py-3 px-4 text-sm font-medium ${
-                  activeTab === "services"
-                    ? "border-b-2 border-base-600 text-base-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Dịch vụ
-              </button>
-            </li>
           </ul>
         </div>
-
         {renderTabContent()}
       </div>
+
+      <DoctorSelectModal
+        isOpen={isDoctorModalOpen}
+        onClose={() => setDoctorModalOpen(false)}
+        departmentId={extractDepartmentId(id!)}
+        onSuccess={async () => {
+          // Refresh danh sách bác sĩ
+          const doctorsData = await departmentService.getDoctorsByDepartmentId(extractDepartmentId(id!));
+          setDoctors(doctorsData as Doctor[]);
+          setDepartment(prev => prev ? { ...prev, staffCount: (doctorsData as Doctor[]).length } : prev);
+        }}
+      />
+
+      <Modal
+        open={warning.open}
+        onCancel={() => setWarning({ open: false })}
+        footer={[
+          <Button key="ok" type="primary" onClick={() => setWarning({ open: false })}>
+            Đã hiểu
+          </Button>
+        ]}
+        centered
+        width={400}
+      >
+        <h3 style={{ fontWeight: 600, fontSize: "16px", marginBottom: "8px" }}>
+          Không thể xóa bác sĩ khỏi khoa
+        </h3>
+        <p>Bác sĩ có lịch làm việc vào ngày {warning.date}</p>
+      </Modal>
+
     </>
   );
 };

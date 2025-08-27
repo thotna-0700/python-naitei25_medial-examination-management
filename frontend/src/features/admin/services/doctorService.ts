@@ -34,6 +34,7 @@ export const doctorService = {
         departmentId: item.department?.id,
         departmentName: item.department?.department_name,
         createdAt: item.created_at,
+        schedules: item.schedules || [],
       }));
     } catch (error: any) {
       console.error("Error fetching doctors:", error);
@@ -67,6 +68,7 @@ export const doctorService = {
         departmentId: item.department?.id,
         departmentName: item.department?.department_name,
         createdAt: item.created_at,
+        schedules: item.schedules || [],
       };
     } catch (error: any) {
       console.error(`Error fetching doctor ${doctorId}:`, error);

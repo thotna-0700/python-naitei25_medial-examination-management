@@ -249,7 +249,8 @@
     "sort": "Sắp xếp",
     "sortAZ": "Tên A → Z",
     "sortZA": "Tên Z → A",
-    "pageInfo": "Hiển thị {{end}} trên tổng số {{total}} phòng ban"
+    "pageInfo": "Hiển thị {{end}} trên tổng số {{total}} phòng ban",
+    "addDoctor": "+ Thêm bác sĩ"
   },
   "navigation": {
     "home": "Trang chủ",

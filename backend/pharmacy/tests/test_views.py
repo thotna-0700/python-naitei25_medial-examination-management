@@ -327,7 +327,6 @@ class PharmacyViewSetTest(TestCase):
 
     def test_get_prescriptions_by_appointment_id(self):
         self.client.force_authenticate(user=self.patient_user)
-        
         new_appointment = Appointment.objects.create(
             doctor=self.doctor,
             patient=self.patient,
@@ -337,7 +336,6 @@ class PharmacyViewSetTest(TestCase):
             slot_end=time(9, 30),
             status=AppointmentStatus.CONFIRMED.value
         )
-        
         new_prescription = Prescription.objects.create(
             appointment=new_appointment,
             patient=self.patient,
