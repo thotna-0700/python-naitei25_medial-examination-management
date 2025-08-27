@@ -1,9 +1,12 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
-import { Calendar, ChevronDown, CheckCircle2, Plus, Trash2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { patientService } from "../../services/patientService";
-import { parse, format } from "date-fns";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { patientService } from '../../services/patientService';
+import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
+import { format, parse } from 'date-fns';
+import DateTimePicker from '../../components/ui/DateTimePicker';
 import ReturnButton from "../../components/ui/button/ReturnButton";
 import type { EmergencyContactDto } from "../../types/patient";
 import { useTranslation } from "react-i18next";
@@ -252,24 +255,14 @@ export default function PatientAddForm() {
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-base-600 font-medium">
-                {t("patientAdd.form.birthday")} <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="birthday"
-                  value={formData.birthday}
-                  onChange={handleChange}
-                  placeholder="DD/MM/YYYY"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-base-500/20 focus:border-base-500"
-                  required
-                />
-                <Calendar
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-              </div>
+              <DateTimePicker
+                label={t("patientAdd.form.birthday")}
+                value={formData.birthday}
+                onChange={(value) => setFormData({ ...formData, birthday: value })}
+                placeholder="DD/MM/YYYY"
+                required
+                maxDate={new Date()}
+              />
             </div>
             <div className="space-y-2">
               <label className="block text-base-600 font-medium">

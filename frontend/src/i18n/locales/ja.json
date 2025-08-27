@@ -2451,6 +2451,8 @@
         "description": "医師に関する詳細情報",
         "fullName": "氏名",
         "fullNamePlaceholder": "氏名を入力...",
+        "firstName": "名前",
+        "lastName": "姓",
         "identityNumber": "身分証明書番号",
         "identityNumberPlaceholder": "身分証明書番号を入力...",
         "birthday": "生年月日",

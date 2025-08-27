@@ -2459,6 +2459,8 @@
         "description": "Thông tin chi tiết về bác sĩ",
         "fullName": "Họ và tên",
         "fullNamePlaceholder": "Nhập họ và tên đầy đủ...",
+        "firstName": "Tên",
+        "lastName": "Họ và tên đệm",
         "identityNumber": "Số CMND/CCCD",
         "identityNumberPlaceholder": "Nhập số CMND/CCCD...",
         "birthday": "Ngày sinh",

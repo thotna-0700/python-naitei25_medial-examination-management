@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, Upload, X } from "lucide-react";
+import { ChevronDown, Upload } from "lucide-react";
+import DateTimePicker from "../../components/ui/DateTimePicker";
 import { doctorService } from "../../services/doctorService";
 import { departmentService } from "../../../../shared/services/departmentService";
 import {
@@ -37,7 +38,8 @@ const AddDoctor: React.FC = () => {
     phone: "",
     password: "",
     email: "",
-    fullName: "",
+    first_name: "",
+    last_name: "",
     identityNumber: "",
     birthday: "",
     gender: "MALE",
@@ -46,7 +48,7 @@ const AddDoctor: React.FC = () => {
     specialization: "",
     type: "EXAMINATION",
     departmentId: 0,
-    consultationFee: 200000,
+    price: 200000,
   });
 
   // Fetch departments on component mount
@@ -146,9 +148,10 @@ const AddDoctor: React.FC = () => {
       console.log("✅ All validation passed. Creating doctor...");
 
       // Split fullName into first_name and last_name
-      const nameParts = formData.fullName.trim().split(" ");
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
+      const fullName = `${formData.first_name} ${formData.last_name}`.trim();
+      const fullNameParts = fullName.split(" ");
+      const firstName = fullNameParts[0] || "";
+      const lastName = fullNameParts.slice(1).join(" ") || "";
 
       // Transform data to match API structure
       const doctorData = {
@@ -167,7 +170,7 @@ const AddDoctor: React.FC = () => {
         phone: formData.phone,
         email: formData.email,
         address: formData.address,
-        price: formData.consultationFee,
+        consultation_fee: formData.price,
         ...(avatarPreview && { avatar: avatarPreview }),
       };
 
@@ -326,10 +329,10 @@ const AddDoctor: React.FC = () => {
     const errors: { [key: string]: string } = {};
 
     // Required fields validation
-    if (!formData.phone.trim()) {
+    if (!formData.phone?.trim()) {
       errors.phone = t("doctors.add.validation.phoneRequired");
     } else {
-      const phoneError = await validatePhone(formData.phone);
+      const phoneError = await validatePhone(formData.phone || "");
       if (phoneError) errors.phone = phoneError;
     }
 
@@ -339,7 +342,7 @@ const AddDoctor: React.FC = () => {
       errors.password = t("doctors.add.validation.passwordMinLength");
     }
 
-    if (!formData.fullName.trim()) {
+    if (!formData.first_name.trim() || !formData.last_name.trim()) {
       errors.fullName = t("doctors.add.validation.fullNameRequired");
     }
 
@@ -627,18 +630,32 @@ const AddDoctor: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block font-medium text-base-700 mb-2">
-                    {t("doctors.add.personalInfo.fullName")}{" "}
+                    {t("doctors.add.personalInfo.firstName")}{" "}
                     <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    name="fullName"
-                    value={formData.fullName}
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleInputChange}
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 transition-colors outline-0"
-                    placeholder={t(
-                      "doctors.add.personalInfo.fullNamePlaceholder"
-                    )}
+                    placeholder="Tên"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium text-base-700 mb-2">
+                    {t("doctors.add.personalInfo.lastName")}{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 transition-colors outline-0"
+                    placeholder="Họ và tên đệm"
                     required
                   />
                 </div>
@@ -667,17 +684,14 @@ const AddDoctor: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-medium text-base-700 mb-2">
-                    {t("doctors.add.personalInfo.birthday")}{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="birthday"
+                  <DateTimePicker
+                    label={t("doctors.add.personalInfo.birthday")}
                     value={formData.birthday}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 transition-colors outline-0"
+                    onChange={(value) => setFormData({ ...formData, birthday: value })}
+                    placeholder="DD/MM/YYYY"
                     required
+                    maxDate={new Date()}
+                    error={fieldErrors.birthday}
                   />
                 </div>
 
@@ -857,8 +871,8 @@ const AddDoctor: React.FC = () => {
                   </label>
                   <input
                     type="number"
-                    name="consultationFee"
-                    value={formData.consultationFee}
+                    name="price"
+                    value={formData.price}
                     onChange={handleInputChange}
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-base-500/20 focus:border-base-500 transition-colors outline-0"
                     placeholder="200000"
