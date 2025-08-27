@@ -119,6 +119,26 @@ const DepartmentDetail: React.FC = () => {
           setDoctors([]);
           setDepartment((prev) => (prev ? { ...prev, staffCount: 0 } : prev));
         }
+        // Fetch real statistics from API
+        try {
+          const statsData = await departmentService.getDepartmentStatistics(numericId);
+          setStats({
+            totalPatients: statsData.totalPatients,
+            todayPatients: statsData.todayPatients,
+            occupancyRate: statsData.occupancyRate,
+            averageStay: statsData.serviceCount // Using serviceCount as averageStay for now
+          });
+        } catch (statsError) {
+          console.error("Error fetching department statistics:", statsError);
+          // Fallback to default values if API fails
+          setStats({
+            totalPatients: 0,
+            todayPatients: 0,
+            occupancyRate: 0,
+            averageStay: 0,
+          });
+        }
+
         // This can be replaced with actual API calls when available
         setServices([
           {
@@ -136,13 +156,6 @@ const DepartmentDetail: React.FC = () => {
             insurance_covered: true,
           },
         ]);
-
-        setStats({
-          totalPatients: 1250,
-          todayPatients: 24,
-          occupancyRate: 75,
-          averageStay: 2.5,
-        });
       } catch (err) {
         console.error("Error fetching department data:", err);
         setError(t("common.error"));
@@ -320,7 +333,7 @@ const DepartmentDetail: React.FC = () => {
                       {t("common.serviceCount")}
                     </p>
                     <p className="text-2xl font-bold text-amber-700">
-                      {services.length}
+                      {stats.averageStay}
                     </p>
                   </div>
                 </div>
@@ -359,7 +372,7 @@ const DepartmentDetail: React.FC = () => {
                       {doctor.first_name} {doctor.last_name}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      {doctor.academic_degree}
+                      {doctor.academicDegree}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
                       {doctor.specialization || "Chưa cập nhật"}
@@ -434,7 +447,7 @@ const DepartmentDetail: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {doctor.academic_degree}
+                          {doctor.academicDegree}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

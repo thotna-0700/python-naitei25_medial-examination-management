@@ -17,35 +17,42 @@ export interface AdminDoctorSchedule {
 }
 
 export interface Doctor {
-  doctorId: number;
-  userId: number;
-  identityNumber: string;
-  fullName: string;
-  birthday: string;
-  gender: "MALE" | "FEMALE" | "OTHER";
-  address: string;
-  academicDegree:
-    | "BS"
-    | "BS_CKI"
-    | "BS_CKII"
-    | "THS_BS"
-    | "TS_BS"
-    | "PGS_TS_BS"
-    | "GS_TS_BS";
-  specialization: string;
-  avatar?: string;
-  type: "EXAMINATION" | "SERVICE";
-  // UPDATED: Department info as nested object, matching API
+  id: number;
+  user: {
+    id: number;
+    email?: string;
+    phone?: string;
+  };
   department: {
     id: number;
     department_name: string;
     description?: string;
     created_at?: string;
   };
-  departmentId: number;
-  departmentName: string;
-  createdAt: string;
-  price?: number;
+  created_at: string;
+  updated_at?: string;
+  identity_number: string;
+  first_name: string;
+  last_name: string;
+  birthday: string;
+  gender: "MALE" | "FEMALE" | "OTHER";
+  address?: string;
+  academic_degree: string;
+  specialization: string;
+  type: "EXAMINATION" | "SERVICE";
+  avatar?: string;
+  price?: string;
+  isAvailable?: boolean;
+  schedules?: any[];
+  // Legacy fields for backward compatibility
+  doctorId?: number;
+  userId?: number;
+  identityNumber?: string;
+  fullName?: string;
+  academicDegree?: string;
+  departmentId?: number;
+  departmentName?: string;
+  createdAt?: string;
 }
 
 export interface DoctorDto {

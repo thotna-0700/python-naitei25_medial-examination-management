@@ -2457,6 +2457,8 @@
         "description": "Detailed information about the doctor",
         "fullName": "Full Name",
         "fullNamePlaceholder": "Enter full name...",
+        "firstName": "First Name",
+        "lastName": "Last Name",
         "identityNumber": "Identity Number",
         "identityNumberPlaceholder": "Enter identity number...",
         "birthday": "Birthday",

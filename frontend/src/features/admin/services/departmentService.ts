@@ -55,4 +55,16 @@ export const departmentService = {
     );
     return response.data;
   },
+
+  async getDepartmentStatistics(departmentId: number): Promise<{
+    totalPatients: number;
+    todayPatients: number;
+    occupancyRate: number;
+    serviceCount: number;
+  }> {
+    const response = await api.get(
+      `/departments/${departmentId}/statistics/`
+    );
+    return response.data;
+  },
 };

@@ -455,6 +455,19 @@ class DepartmentViewSet(viewsets.ViewSet):
         department = self.get_object(pk)
         updated_department = DepartmentService().delete_avatar(department)
         return Response(DepartmentSerializer(updated_department).data)
+    
+    @drf_permission_classes((AllowAny,))
+    @action(detail=True, methods=['get'])
+    def statistics(self, request, pk=None):
+        """Get real-time statistics for a department"""
+        try:
+            stats = DepartmentService().get_department_statistics(pk)
+            return Response(stats)
+        except Exception as e:
+            return Response(
+                {'error': 'Không thể lấy thống kê khoa'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ExaminationRoomViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]

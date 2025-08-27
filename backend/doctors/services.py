@@ -130,6 +130,66 @@ class DepartmentService:
 
     def get_doctors_by_department_id(self, department_id):
         return Doctor.objects.filter(department_id=department_id).order_by('last_name', 'first_name')
+    
+    def get_department_statistics(self, department_id):
+        """Get real statistics for a department"""
+        from django.db.models import Count, Sum, Avg
+        from django.utils import timezone
+        
+        department = self.get_department_by_id(department_id)
+        today = timezone.now().date()
+        
+        # Get all doctors in this department
+        doctors = Doctor.objects.filter(department_id=department_id)
+        doctor_ids = list(doctors.values_list('id', flat=True))
+        
+        # 1. Total patients who have appointments with doctors in this department (all time)
+        total_patients = Appointment.objects.filter(
+            doctor_id__in=doctor_ids
+        ).exclude(
+            status__in=[AppointmentStatus.CANCELLED.value, AppointmentStatus.NO_SHOW.value]
+        ).values('patient_id').distinct().count()
+        
+        # 2. Today's patients - check appointments with schedules that have work_date = today
+        today_schedules = Schedule.objects.filter(
+            doctor_id__in=doctor_ids,
+            work_date=today
+        )
+        today_schedule_ids = list(today_schedules.values_list('id', flat=True))
+        
+        today_patients = Appointment.objects.filter(
+            schedule_id__in=today_schedule_ids
+        ).exclude(
+            status__in=[AppointmentStatus.CANCELLED.value, AppointmentStatus.NO_SHOW.value]
+        ).values('patient_id').distinct().count()
+        
+        # 3. Occupancy rate - average of current_patients/max_patients across all schedules
+        schedules_with_data = Schedule.objects.filter(
+            doctor_id__in=doctor_ids,
+            max_patients__gt=0  # Only schedules with max_patients > 0
+        )
+        
+        if schedules_with_data.exists():
+            # Calculate occupancy rate for each schedule and get average
+            occupancy_rates = []
+            for schedule in schedules_with_data:
+                rate = (schedule.current_patients / schedule.max_patients) * 100
+                occupancy_rates.append(rate)
+            
+            occupancy_rate = round(sum(occupancy_rates) / len(occupancy_rates), 1) if occupancy_rates else 0
+        else:
+            occupancy_rate = 0
+        
+        # 4. Count services available in this department
+        # Default to 2 services per department
+        service_count = 2
+        
+        return {
+            'totalPatients': total_patients,
+            'todayPatients': today_patients, 
+            'occupancyRate': occupancy_rate,
+            'serviceCount': service_count
+        }
 
 class ExaminationRoomService:
     def get_all_examination_rooms(self):
