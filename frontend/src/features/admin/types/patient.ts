@@ -53,19 +53,23 @@ export interface CreatePatientRequest {
   email: string;
   phone: string;
   password: string;
-  identityNumber: string;
-  insuranceNumber: string;
+  identity_number: string;
+  insurance_number: string;
   first_name: string;
   last_name: string;
   birthday: string;
   avatar?: string;
-  gender?: "MALE" | "FEMALE" | "OTHER";
+  gender?: "M" | "F" | "O";
   address?: string;
   allergies?: string;
   height?: number;
   weight?: number;
-  bloodType?: string;
-  emergencyContactDtos?: EmergencyContactDto[];
+  blood_type?: string;
+  emergencyContactDtos?: {
+    contact_name: string;
+    contact_phone: string;
+    relationship: string;
+  }[];
 }
 
 export interface PatientUpdateDto {

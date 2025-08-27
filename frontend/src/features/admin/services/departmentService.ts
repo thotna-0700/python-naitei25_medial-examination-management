@@ -1,9 +1,9 @@
 import { api } from "../../../shared/services/api";
 import { DepartmentFromAPI } from "../types/department";
-import type { Doctor } from "../types/doctor"; 
+import type { Doctor } from "../types/doctor";
 
 export interface DepartmentDto {
-  department_name: string; 
+  department_name: string;
   description: string;
   location?: string;
   head?: string;
@@ -16,12 +16,19 @@ export const departmentService = {
   },
 
   async getDepartmentById(departmentId: number): Promise<DepartmentFromAPI> {
-    const response = await api.get<DepartmentFromAPI>(`/departments/${departmentId}/`);
+    const response = await api.get<DepartmentFromAPI>(
+      `/departments/${departmentId}/`
+    );
     return response.data;
   },
 
-  async createDepartment(departmentData: DepartmentDto): Promise<DepartmentFromAPI> {
-    const response = await api.post<DepartmentFromAPI>("/departments/", departmentData);
+  async createDepartment(
+    departmentData: DepartmentDto
+  ): Promise<DepartmentFromAPI> {
+    const response = await api.post<DepartmentFromAPI>(
+      "/departments/",
+      departmentData
+    );
     return response.data;
   },
 
@@ -43,7 +50,9 @@ export const departmentService = {
 
   // Changed return type to Doctor[]
   async getDoctorsByDepartmentId(departmentId: number): Promise<Doctor[]> {
-    const response = await api.get<Doctor[]>(`/departments/${departmentId}/doctors/`);
+    const response = await api.get<Doctor[]>(
+      `/departments/${departmentId}/doctors/`
+    );
     return response.data;
   },
 };

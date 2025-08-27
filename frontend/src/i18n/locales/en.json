@@ -2486,7 +2486,10 @@
         "invalidEmail": "Invalid email",
         "invalidIdentityNumber": "Invalid identity number",
         "invalidBirthday": "Invalid birthday",
-        "invalidConsultationFee": "Invalid consultation fee"
+        "invalidConsultationFee": "Invalid consultation fee",
+        "phoneInvalid": "Invalid phone number",
+        "emailInvalid": "Invalid email address",
+        "identityInvalid": "Invalid identity number"
       },
       "fieldNames": {
         "phone": "Phone Number",
@@ -2625,6 +2628,67 @@
         "saveButton": "Save",
         "savingButton": "Saving..."
       }
+    },
+    "filters": {
+      "title": "Doctor List",
+      "count": "doctors",
+      "search": {
+        "label": "Search",
+        "placeholder": "Enter search keywords...",
+        "fieldLabel": "Search in",
+        "allFields": "All fields",
+        "name": "Name",
+        "specialization": "Specialization",
+        "identity": "ID Card",
+        "department": "Department"
+      },
+      "gender": {
+        "label": "Gender",
+        "all": "All",
+        "male": "Male",
+        "female": "Female",
+        "other": "Other"
+      },
+      "degree": {
+        "label": "Academic Degree",
+        "all": "All"
+      },
+      "type": {
+        "label": "Type",
+        "all": "All",
+        "examination": "Examination",
+        "service": "Service"
+      },
+      "department": {
+        "label": "Department",
+        "all": "All departments"
+      },
+      "sort": {
+        "label": "Sort by",
+        "name": "Name",
+        "degree": "Academic Degree",
+        "specialization": "Specialization",
+        "department": "Department",
+        "createdAt": "Created Date",
+        "ascending": "↑ Ascending",
+        "descending": "↓ Descending"
+      },
+      "actions": {
+        "clearFilters": "Clear Filters"
+      },
+      "results": {
+        "showing": "Showing {{filtered}} / {{total}} doctors",
+        "searchTag": "Search: \"{{term}}\"",
+        "genderTag": "Gender: {{gender}}",
+        "degreeTag": "Degree: {{degree}}",
+        "typeTag": "Type: {{type}}",
+        "departmentTag": "Department: {{department}}",
+        "doctorId": "ID: {{id}}"
+      }
+    },
+    "actions": {
+      "viewSchedule": "View Schedule",
+      "viewDetails": "View Doctor Details"
     }
   },
   "doctorSchedule": {
