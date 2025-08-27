@@ -41,6 +41,7 @@ import dayjs from "dayjs"
 import utc from "dayjs/plugin/utc"
 dayjs.extend(utc)
 import { api } from "../../../../shared/services/api"
+import { useTranslation } from "react-i18next"
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -67,9 +68,8 @@ const PatientDetail: React.FC = () => {
     const [appointment, setAppointment] = useState<Appointment | null>(null)
     const [currentServiceOrder, setCurrentServiceOrder] = useState<ServiceOrder | null>(null)
     const [roomNote, setRoomNote] = useState<string>("")
-    // Thêm state để lưu thông tin bệnh nhân
     const [patientDetail, setPatientDetail] = useState<any>(null)
-    // Lấy thông tin bệnh nhân khi currentServiceOrder có appointmentId
+    const { t } = useTranslation()
 
     useEffect(() => {
         const fetchRoomNote = async () => {
@@ -390,9 +390,9 @@ const PatientDetail: React.FC = () => {
     }
 
     return (
-        <div className="flex-1 min-h-screen bg-gray-50 p-6">
+        <div className="flex-1 min-h-screen">
             <main>
-                <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="">
                     <div className="mb-6">
                         <Row gutter={24} align="middle">
                             <Col span={12}>

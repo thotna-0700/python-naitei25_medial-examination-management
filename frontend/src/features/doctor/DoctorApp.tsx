@@ -1,43 +1,48 @@
-import { Routes, Route, Navigate } from "react-router-dom"
-import { useTranslation } from "react-i18next"
-import NotFound from "./pages/OtherPage/NotFound"
-import AppLayout from "../../shared/layouts/AppLayout"
-import { ScrollToTop } from "../../shared/components/common/ScrollToTop"
-import Home from "./pages/Dashboard/Home"
-import HomeService from "./pages/Dashboard/HomeService"
-import Patient from "./pages/Patients/Patient"
-import ServicePatient from "./pages/Patients/ServicePatient"
-import PatientDetail from "./pages/Patients/PatientDetail"
-import ServicePatientDetail from "./pages/Patients/ServicePatientDetail"
-import Appointment from "./pages/Appointment/Appointment"
-import Profile from "./pages/Profile/Profile"
-import Schedule from "./pages/Schedules/Schedule"
-import { AppointmentProvider } from "./context/AppointmentContext"
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import NotFound from "./pages/OtherPage/NotFound";
+import AppLayout from "../../shared/layouts/AppLayout";
+import { ScrollToTop } from "../../shared/components/common/ScrollToTop";
+import Home from "./pages/Dashboard/Home";
+import HomeService from "./pages/Dashboard/HomeService";
+import Patient from "./pages/Patients/Patient";
+import ServicePatient from "./pages/Patients/ServicePatient";
+import PatientDetail from "./pages/Patients/PatientDetail";
+import ServicePatientDetail from "./pages/Patients/ServicePatientDetail";
+import Appointment from "./pages/Appointment/Appointment";
+import Profile from "./pages/Profile/Profile";
+import Schedule from "./pages/Schedules/Schedule";
+import { AppointmentProvider } from "./context/AppointmentContext";
 
-const RequireDoctor: React.FC<{ children: React.ReactNode; allowedType?: string }> = ({ children, allowedType }) => {
-    const { t } = useTranslation()
-    const role = localStorage.getItem("authRole")
-    const doctorType = localStorage.getItem("doctorType")
+const RequireDoctor: React.FC<{
+    children: React.ReactNode;
+    allowedType?: string;
+}> = ({ children, allowedType }) => {
+    const { t } = useTranslation();
+    const role = localStorage.getItem("authRole");
+    const doctorType = localStorage.getItem("doctorType");
 
     if (role !== "D") {
-        return <Navigate to="/login" replace />
+        return <Navigate to="/login" replace />;
     }
     if (allowedType && doctorType !== allowedType) {
-        return <Navigate to="/unauthorized" replace />
+        return <Navigate to="/unauthorized" replace />;
     }
-    return <>{children}</>
-}
+    return <>{children}</>;
+};
 
 const UnauthorizedPage: React.FC = () => {
-    const { t } = useTranslation()
-    return <div>{t("navigation.unauthorized")}</div>
-}
+    const { t } = useTranslation();
+    return <div>{t("navigation.unauthorized")}</div>;
+};
 
 const DoctorApp: React.FC = () => {
-    const { t } = useTranslation()
+    const { t } = useTranslation();
 
     return (
-        <AppointmentProvider> {/* Wrap the entire Routes with AppointmentProvider */}
+        <AppointmentProvider>
+            {" "}
+            {/* Wrap the entire Routes with AppointmentProvider */}
             <ScrollToTop />
             <Routes>
                 <Route
@@ -71,9 +76,11 @@ const DoctorApp: React.FC = () => {
                     <Route path="schedule" element={<Schedule />} />
                     <Route path="profile" element={<Profile />} />
                     <Route path="patients" element={<ServicePatient />} />
-                    <Route path="patient/detail/:orderId" element={<ServicePatientDetail />} />
+                    <Route
+                        path="patient/detail/:orderId"
+                        element={<ServicePatientDetail />}
+                    />
                 </Route>
-
                 <Route
                     index
                     element={
@@ -81,9 +88,9 @@ const DoctorApp: React.FC = () => {
                             <Navigate
                                 to={
                                     localStorage.getItem("doctorType") === "E"
-                                        ? "/doctor/examination"
+                                        ? "/doctor/examination/dashboard"
                                         : localStorage.getItem("doctorType") === "S"
-                                            ? "/doctor/service"
+                                            ? "/doctor/service/dashboard"
                                             : "/login"
                                 }
                                 replace
@@ -96,7 +103,7 @@ const DoctorApp: React.FC = () => {
                 <Route path="*" element={<NotFound />} />
             </Routes>
         </AppointmentProvider>
-    )
-}
+    );
+};
 
-export default DoctorApp
+export default DoctorApp;
