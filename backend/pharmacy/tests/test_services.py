@@ -11,7 +11,7 @@ from patients.models import Patient
 from appointments.models import Appointment
 from doctors.models import Doctor, Department, Schedule, ExaminationRoom
 from users.models import User
-from common.enums import Gender, AcademicDegree, DoctorType, RoomType, Shift, UserRole
+from common.enums import AppointmentStatus, Gender, AcademicDegree, DoctorType, RoomType, Shift, UserRole
 from common.constants import SCHEDULE_DEFAULTS, PHARMACY_LENGTH, COMMON_LENGTH, MIN_VALUE
 
 class PharmacyServiceTest(TestCase):
@@ -111,8 +111,19 @@ class PharmacyServiceTest(TestCase):
         )
 
     def test_create_prescription(self):
+        # create a fresh appointment
+        new_appointment = Appointment.objects.create(
+            doctor=self.doctor,
+            patient=self.patient,
+            schedule=self.schedule,
+            symptoms="Cough",
+            slot_start=time(8, 30),
+            slot_end=time(9, 0),
+            status=AppointmentStatus.CONFIRMED.value
+        )
+
         data = {
-            'appointment_id': self.appointment.id,
+            'appointment_id': new_appointment.id,  # use the new appointment
             'patient_id': self.patient.id,
             'follow_up_date': date(2025, 9, 3),
             'is_follow_up': False,

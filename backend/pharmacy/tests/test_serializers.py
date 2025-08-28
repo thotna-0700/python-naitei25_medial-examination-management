@@ -223,8 +223,18 @@ class PrescriptionSerializerTest(TestCase):
         self.assertEqual(serializer.data, expected_data)
 
     def test_deserialize_valid_data(self):
+        new_appointment = Appointment.objects.create(
+            doctor=self.doctor,
+            patient=self.patient,
+            schedule=self.schedule,
+            symptoms="Cough",
+            slot_start=time(8, 30),
+            slot_end=time(9, 0),
+            status="CONFIRMED"
+        )
+
         data = {
-            'appointment': self.appointment.id,
+            'appointment': new_appointment.id,
             'patient': self.patient.id,
             'follow_up_date': "2025-09-03",
             'is_follow_up': False,

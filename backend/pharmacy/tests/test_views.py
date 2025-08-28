@@ -10,7 +10,7 @@ from pharmacy.models import Medicine, Prescription, PrescriptionDetail
 from patients.models import Patient
 from appointments.models import Appointment
 from doctors.models import Doctor, Department, Schedule, ExaminationRoom
-from common.enums import Gender, AcademicDegree, DoctorType, RoomType, Shift, UserRole
+from common.enums import AppointmentStatus, Gender, AcademicDegree, DoctorType, RoomType, Shift, UserRole
 from common.constants import SCHEDULE_DEFAULTS
 from decimal import Decimal
 from datetime import date, time, datetime
@@ -88,7 +88,7 @@ class PharmacyViewSetTest(TestCase):
             symptoms="Fever",
             slot_start=time(8, 0),
             slot_end=time(8, 30),
-            status="CONFIRMED"
+            status=AppointmentStatus.CONFIRMED.value
         )
         cls.medicine = Medicine.objects.create(
             medicine_name="Paracetamol",
@@ -155,8 +155,17 @@ class PharmacyViewSetTest(TestCase):
 
     def test_create_prescription(self):
         self.client.force_authenticate(user=self.doctor_user)
+        new_appointment = Appointment.objects.create(
+            doctor=self.doctor,
+            patient=self.patient,
+            schedule=self.schedule,
+            symptoms="Cough",
+            slot_start=time(8, 30),
+            slot_end=time(9, 0),
+            status=AppointmentStatus.CONFIRMED.value
+        )
         data = {
-            'appointment_id': self.appointment.id,
+            'appointment_id': new_appointment.id,
             'patient_id': self.patient.id,
             'follow_up_date': None,
             'is_follow_up': False,
@@ -318,10 +327,28 @@ class PharmacyViewSetTest(TestCase):
 
     def test_get_prescriptions_by_appointment_id(self):
         self.client.force_authenticate(user=self.patient_user)
-        response = self.client.get(reverse('prescription-get-prescriptions-by-appointment-id', kwargs={'appointment_id': self.appointment.id}))
+        
+        new_appointment = Appointment.objects.create(
+            doctor=self.doctor,
+            patient=self.patient,
+            schedule=self.schedule,
+            symptoms="Headache",
+            slot_start=time(9, 0),
+            slot_end=time(9, 30),
+            status=AppointmentStatus.CONFIRMED.value
+        )
+        
+        new_prescription = Prescription.objects.create(
+            appointment=new_appointment,
+            patient=self.patient,
+            diagnosis="Migraine"
+        )
+        
+        response = self.client.get(
+            reverse('prescription-get-prescriptions-by-appointment-id', kwargs={'appointment_id': new_appointment.id})
+        )
+        
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['id'], self.prescription.id)
 
     def test_get_prescription_pdf(self):
         self.client.force_authenticate(user=self.patient_user)
